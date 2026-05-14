@@ -1,0 +1,19 @@
+# Generated artifacts
+*.faiss
+hpo_mapping.pkl
+hpo_vectorizer.pkl
+
+# Raw data sources (large, not needed at runtime)
+hp.json
+ORDO_en_4.8.owl.xml
+en_product4.xml
+
+# PDFs
+*.pdf
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
