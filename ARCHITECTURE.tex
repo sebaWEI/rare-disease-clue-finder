@@ -1,0 +1,783 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{mdframed}
+\usepackage{listings}
+\usepackage{float}
+
+\geometry{margin=1in}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black}
+
+% ── Colors ────────────────────────────────────────────────────────────
+\definecolor{accent}{HTML}{1E3A8A}
+\definecolor{lightgray}{HTML}{F3F4F6}
+\definecolor{codebg}{HTML}{F8FAFC}
+
+% ── Title formatting ──────────────────────────────────────────────────
+\titleformat{\section}{\Large\bfseries\color{accent}}{}{0em}{}
+\titleformat{\subsection}{\large\bfseries\color{accent!80!black}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{accent!60!black}}{}{0em}{}
+
+% ── Code block ────────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{lightgray},
+  breaklines=true,
+  xleftmargin=1em,
+  xrightmargin=1em,
+  aboveskip=1em,
+  belowskip=1em,
+}
+
+% ── Callout box ───────────────────────────────────────────────────────
+\newmdenv[
+  linecolor=accent!40,
+  backgroundcolor=accent!5,
+  roundcorner=5pt,
+  skipabove=1em,
+  skipbelow=1em,
+  innerleftmargin=1em,
+  innerrightmargin=1em
+]{callout}
+
+% ── Header / Footer ───────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{gray}Rare Disease Pre-diagnosis Clue Finder · Architecture Document}
+\fancyhead[R]{\small\color{gray}iGEM 2026 PekingHSC}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+% ═══════════════════════════════════════════════════════════════════════
+% TITLE PAGE
+% ═══════════════════════════════════════════════════════════════════════
+\begin{titlepage}
+\vspace*{3cm}
+\begin{center}
+{\Huge\bfseries\color{accent} Rare Disease Pre-diagnosis Clue Finder}\\[0.5cm]
+{\Large Architecture \& Algorithm Reference}\\[1.5cm]
+{\large iGEM 2026 · PekingHSC}\\[0.3cm]
+{\large Human Phenotype Ontology × Orphanet Knowledge Graph}\\[2cm]
+{\normalsize Wei Ziheng (Sebastian Wei)}\\[0.3cm]
+{\small \today}
+\end{center}
+\vfill
+\begin{callout}
+\textbf{Abstract.} This document describes the complete architecture of the Rare Disease Pre-diagnosis Clue Finder—a knowledge-graph-powered diagnostic assistant that translates colloquial symptom descriptions into structured HPO (Human Phenotype Ontology) terms, retrieves candidate matches via a hybrid keyword–vector index, validates them through an LLM-based reranking stage, and infers the most likely rare diseases using a True Path Rule engine with IDF-weighted scoring. The system is designed to run on a 2-core, 4\,GB server with all NLP and embedding workloads offloaded to cloud APIs.
+\end{callout}
+\end{titlepage}
+
+% ═══════════════════════════════════════════════════════════════════════
+\tableofcontents
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{System Overview}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{What Problem Does It Solve?}
+
+A patient walks into a clinic and says:
+
+\begin{quote}
+\itshape
+``My hands and feet feel like they're burning. I have these dark red spots on my belly and thighs. I can't sweat at all. Every time I eat, I get diarrhea. I always feel overheated.''
+\end{quote}
+
+A general practitioner might order routine tests. But these seven words—\textbf{burning pain}, \textbf{dark red spots}, \textbf{inability to sweat}, \textbf{postprandial diarrhea}, \textbf{heat intolerance}—are, together, the textbook presentation of \textbf{Fabry disease}, a rare lysosomal storage disorder with a median diagnostic delay of over a decade.
+
+The Rare Disease Pre-diagnosis Clue Finder automates exactly this pattern-recognition process. It takes free-text, colloquial symptom descriptions and maps them through a structured medical ontology to produce a ranked list of candidate diseases, each accompanied by an \textit{explainable evidence trail}.
+
+\subsection{The Pipeline at a Glance}
+
+\begin{enumerate}[leftmargin=*,itemsep=4pt]
+  \item \textbf{Symptom Extraction.} A large language model (DeepSeek v4-flash) reads the free-text input, breaks it into atomic symptoms, and translates each into a standardized HPO term.
+  \item \textbf{Candidate Retrieval.} Each standardized term is looked up in two indices simultaneously: a lexical keyword index (searching HPO names, synonyms, and definitions) and a FAISS vector index (1024-dimensional embeddings via BAAI/bge-m3). Results are merged into a unified candidate pool of up to 25 terms.
+  \item \textbf{LLM Reranking.} DeepSeek reviews each candidate pool \textit{with the full original patient text as context}, selects the single best HPO match for each symptom, or rejects all candidates if none fit.
+  \item \textbf{True Path Rule Inference.} The selected HPO terms are fed into a NetworkX knowledge graph (35,964 nodes, 139,516 edges). The graph traverses the HPO hierarchy—accounting for direct, child, and parent matches—and scores each candidate disease using frequency-weighted contributions with an IDF-smoothing penalty that prevents common symptoms from dominating.
+  \item \textbf{Explainable Output.} The top 5 diseases are returned, each with a full evidence trail showing \textit{which} symptom matched \textit{which} HPO term, \textit{how} (direct/child/parent), and \textit{how much} it contributed to the final score.
+\end{enumerate}
+
+\subsection{Technology Stack}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Layer} & \textbf{Technology} & \textbf{Role} \\
+\midrule
+Inference Engine & NetworkX DiGraph & Directed knowledge graph \\
+Symptom Extraction & DeepSeek v4-flash API & Zero-shot medical NER + HPO standardization \\
+Vector Retrieval & FAISS IndexFlatIP + BAAI/bge-m3 & 1024-dim semantic search \\
+Candidate Reranking & DeepSeek v4-flash API & Context-aware medical candidate selection \\
+Web Framework & FastAPI + uvicorn & Async REST API \\
+Data Sources & HPO v2026-02-16 + Orphanet ORDO v4.8 & Phenotype ontology + rare disease KB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{The Knowledge Graph}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{Graph Topology}
+
+The knowledge graph is a \textbf{heterogeneous directed graph} with two node types and two edge types:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Type} & \textbf{Count} & \textbf{ID Format} & \textbf{Attributes} \\
+\midrule
+Phenotype nodes & 19,944 & \texttt{HP:NNNNNNN} & name, synonyms, definition \\
+Disease nodes   & 16,020 & \texttt{ORPHA:NNNN} & name \\
+\midrule
+\textit{Total nodes} & \textit{35,964} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Type} & \textbf{Count} & \textbf{Direction} & \textbf{Meaning} \\
+\midrule
+\texttt{is\_a} & 23,677 & child $\rightarrow$ parent & HPO ontological hierarchy \\
+\texttt{disease\_has\_hpo} & 115,878 & disease $\rightarrow$ hpo & Disease–phenotype association (with frequency weight) \\
+\midrule
+\textit{Total edges} & \textit{139,516} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{callout}
+\textbf{Direction convention.} HPO \texttt{is\_a} edges point from child (specific) to parent (general). This means \texttt{nx.ancestors(G, hpo)} returns \textit{children} (more specific terms), and \texttt{nx.descendants(G, hpo)} returns \textit{parents} (more general terms). The code uses semantic naming—``children'' and ``parents'' refer to the clinical relationship, not the graph direction.
+\end{callout}
+
+\subsection{Frequency Weights}
+
+Each disease–HPO edge carries a frequency weight indicating how often the phenotype appears in that disease:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Frequency Label} & \textbf{Weight} \\
+\midrule
+Obligate (100\%)     & 1.00 \\
+Very frequent (80–99\%) & 0.90 \\
+Frequent (30–79\%)    & 0.55 \\
+Occasional (5–29\%)   & 0.17 \\
+Very rare ($<$5\%)     & 0.02 \\
+Excluded (0\%)        & 0.00 \\
+No data               & 0.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Ingestion}
+
+The script \texttt{parse\_data.py} processes three raw sources into three CSV files:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{hp.json} — HPO ontology: term names, synonyms, \textbf{definitions}, and \texttt{is\_a} edges.
+  \item \texttt{ORDO\_en\_4.8.owl.xml} — Orphanet Rare Disease Ontology: disease names and IDs.
+  \item \texttt{en\_product4.xml} — Orphanet epidemiological data: disease–HPO associations with frequency labels.
+\end{itemize}
+
+The output \texttt{nodes.csv} includes a \texttt{definition} column containing the full HPO definition text for each phenotype term. This field is critical for downstream retrieval: for example, ``Acroparesthesia'' has an empty synonym list but its definition reads \textit{``burning or numbness\ldots in the hands and feet''}—which directly bridges the layperson phrase ``burning pain in my hands.''
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Symptom Extraction \& Standardization}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{The Semantic Gap Problem}
+
+Patients describe symptoms in colloquial language. The HPO ontology uses precise medical nomenclature. The gap between ``can't sweat'' and ``Anhidrosis''—or between ``dark red spots'' and ``Angiokeratoma''—is too wide for simple string matching or naive vector search to bridge reliably.
+
+\subsection{DeepSeek Extraction Prompt}
+
+We use a single zero-shot prompt to perform both entity extraction and HPO standardization:
+
+\begin{lstlisting}[caption={Extraction prompt (simplified)},label={lst:extract}]
+You are an expert clinical information extractor.
+Analyze the following user text and extract the distinct
+medical signs and symptoms.
+
+Rules:
+1. Break down complex descriptions into atomic symptoms.
+2. MUST include anatomical location.
+3. For 'standard_term', output the EXACT HPO term name
+   whenever possible — not a general clinical description.
+   Examples:
+     "dark red spots on skin" → "Angiokeratoma"
+                                (not "purpura" or "red spots")
+     "burning pain in hands and feet" → "Acroparesthesia"
+                                (not "burning paresthesia")
+     "cannot sweat" → "Anhidrosis"
+                                (not "absence of sweating")
+4. Return a JSON array of {raw_description, standard_term}.
+\end{lstlisting}
+
+\subsection{Output Structure}
+
+\begin{lstlisting}[caption={Example extraction output}]
+[
+  {"raw_description": "burning pain in hands",
+   "standard_term":   "Acroparesthesia"},
+  {"raw_description": "dark red spots on belly",
+   "standard_term":   "Angiokeratoma"},
+  {"raw_description": "cannot sweat at all",
+   "standard_term":   "Anhidrosis"}
+]
+\end{lstlisting}
+
+\subsection{The Critical Design Decision: Strict Separation}
+
+The two fields serve different consumers and must \textbf{never be concatenated}:
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{raw\_description} is for the \textbf{user interface}. The patient sees their own words mirrored back, building trust.
+  \item \texttt{standard\_term} is for the \textbf{retrieval pipeline}. It feeds the keyword index, the FAISS index, and the DeepSeek reranker.
+\end{itemize}
+
+Concatenating them (e.g., \texttt{"burning pain in hands (Acroparesthesia)"}) causes \textbf{semantic dilution}: the embedding model's attention is scattered across high-frequency layperson words (\textit{hands}, \textit{feet}, \textit{pain}), drowning out the precise medical signal needed for HPO ontology matching. This single architectural decision eliminated the majority of false-positive vector matches observed in early testing.
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{The Retrieval System}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{Dual-Index Architecture}
+
+Each standardized symptom term is looked up in two independent indices, and the results are merged into a single candidate pool:
+
+\begin{center}
+\begin{tabular}{ccc}
+\textbf{Keyword Index} & \qquad & \textbf{FAISS Vector Index} \\
+\small(graph.search\_hpo) & & \small(IndexFlatIP, 1024-dim) \\
+$\downarrow$ & & $\downarrow$ \\
+\small Substring match against & & \small Top-20 nearest neighbors \\
+\small name, synonyms, \textbf{definition} & & \small via BAAI/bge-m3 embedding \\
+$\downarrow$ & & $\downarrow$ \\
+\multicolumn{3}{c}{\textbf{Unified Candidate Pool ($\leq$ 25 terms)}} \\
+\end{tabular}
+\end{center}
+
+\subsection{Keyword Index}
+
+The keyword index performs case-insensitive substring matching with a three-tier fallback:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Name.} Exact or partial match against the HPO term name (e.g., ``Anhidrosis'' $\leftarrow$ ``anhidrosis'').
+  \item \textbf{Synonyms.} If the name fails, search the synonyms field (e.g., ``Lack of sweating'' $\leftarrow$ ``cannot sweat'').
+  \item \textbf{Definition.} If synonyms also fail, search the definition text (e.g., ``burning\ldots in the hands and feet'' $\leftarrow$ ``burning pain in hands'').
+\end{enumerate}
+
+The definition search is what makes the keyword index genuinely useful. Without it, ``Acroparesthesia'' (which has no synonyms in the ontology) would be invisible to keyword search for queries like ``burning pain''—even though its definition explicitly contains those words.
+
+\subsection{FAISS Vector Index}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Embedding model & BAAI/bge-m3 (SiliconFlow API) \\
+Dimensionality & 1024 \\
+Index type & IndexFlatIP (inner product = cosine on L2-normalized vectors) \\
+Index size & 19,944 HPO phenotype terms \\
+Query side & With instruction prefix \\
+Document side & Without prefix \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Document Text Format}
+
+Each HPO term in the FAISS index is embedded as a structured text block:
+
+\begin{lstlisting}[caption={Index text for Acroparesthesia (HP:0031006)}]
+Name: Acroparesthesia | Definition: A type of paresthesia
+(tingling, pins-and-needles, burning or numbness or stiffness)
+that occurs in the hands and feet and particularly in the
+fingers and toes.
+\end{lstlisting}
+
+Embedding only the term name (``Acroparesthesia'') would give the vector model no signal that this term is related to ``burning'' or ``hands.'' Including the definition bridges this gap: the embedding now encodes both the medical label \textit{and} the layperson-accessible description.
+
+\subsubsection{Asymmetric Retrieval Design}
+
+The BGE model family supports instruction-tuned encoding, where the query and document sides receive different prompts:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Query side} (what we search \textit{with}):\\
+  \texttt{"Represent this medical symptom for retrieving relevant rare disease}\\\texttt{phenotype terms from a standard ontology: Acroparesthesia"}
+  \item \textbf{Document side} (what we search \textit{in}):\\
+  \texttt{"Name: Acroparesthesia | Definition: \ldots"} \hfill (\textit{no prefix})
+\end{itemize}
+
+This asymmetry signals the model to encode the query as a \textit{search intent} and the document as a \textit{passive passage}, improving recall for short queries against longer document texts.
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Two-Stage Candidate Reranking}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{Why Reranking Is Necessary}
+
+FAISS is excellent at recall but terrible at precision for medical text. It operates purely on vector similarity—it has no understanding of medicine. Given ``hand pain'' as a query, FAISS might recall ``Fused finger joints'' because both involve \textit{hand} and \textit{pain} in similar vector neighborhoods. A human clinician (or a capable LLM) instantly knows this is wrong.
+
+Conversely, an LLM asked to suggest an HPO term from scratch might \textit{hallucinate}—inventing a term that does not exist in the ontology.
+
+The two-stage architecture cancels out both failure modes:
+
+\begin{callout}
+\textbf{FAISS constrains the LLM.} The LLM can only choose from real HPO terms that actually exist in the ontology—eliminating hallucinations.\\
+\textbf{The LLM corrects FAISS.} The LLM reads the clinical context and rejects vector-neighbor false positives—eliminating nonsensical matches.
+\end{callout}
+
+\subsection{Unified Candidate Pool (v3 Architecture)}
+
+Earlier versions used a ``keyword fast-path'' where keyword matches were accepted directly without LLM review. This was removed in the current architecture. The v3 flow collects all candidates—keyword and FAISS—into a single pool and sends everything through the same DeepSeek gatekeeper:
+
+\begin{lstlisting}[caption={Unified candidate collection (per symptom)}]
+# Step 1: Collect candidates from both sources
+candidates = []
+
+# a. Keyword search (limit=5, searches name/synonyms/definition)
+kw_hits = graph.search_hpo(standard_term, limit=5)
+candidates.extend(kw_hits)
+
+# b. FAISS vector recall (top-20)
+if vector_index is not None:
+    query_vec = get_api_embedding(standard_term)
+    distances, indices = vector_index.search(query_vec, 20)
+    candidates.extend(faiss_results)
+
+# c. Deduplicate
+candidates = deduplicate(candidates)  # ≤ 25 unique terms
+
+# Step 2: LLM rerank (single gatekeeper for all candidates)
+best_id = llm_rerank_candidates(
+    raw_description,      # single symptom fragment
+    candidates,            # unified pool
+    full_text=original     # full patient narrative as context
+)
+\end{lstlisting}
+
+\subsection{Reranker Prompt Design}
+
+The reranker receives three pieces of information:
+
+\begin{enumerate}[leftmargin=*]
+  \item The single symptom fragment being resolved (e.g., ``dark red spots on belly and thighs'')
+  \item The \textbf{full original patient text} as clinical context (e.g., ``burning pain in hands, dark red spots, cannot sweat, diarrhea after eating, feeling overheated'')
+  \item The unified candidate pool ($\leq$ 25 HPO terms)
+\end{enumerate}
+
+The full text is the key. In isolation, ``dark red spots'' could reasonably match ``Purpura'' (a generic bleeding-under-skin term). But when the model also sees ``burning pain in extremities'' + ``cannot sweat'' + ``postprandial diarrhea,'' the clinical picture shifts decisively toward Fabry disease, and the correct match becomes ``Angiokeratoma.''
+
+\begin{lstlisting}[caption={Reranker prompt (abbreviated)}]
+You are an expert medical ontology matcher.
+The patient reported: "dark red spots on belly and thighs"
+
+The patient's FULL description was: "burning pain in hands,
+dark red spots, cannot sweat, diarrhea after eating, overheated"
+
+Candidates:
+- ID: HP:0000979 | Term: Purpura
+- ID: HP:0001014 | Term: Angiokeratoma
+- ...
+
+TASK: Select the SINGLE candidate that best fits.
+Use the FULL clinical context to disambiguate.
+If none match, reject all.
+
+Output: {"selected_id": "HP:0001014"} OR {"selected_id": null}
+\end{lstlisting}
+
+\subsection{Fault Tolerance}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Condition} & \textbf{Behavior} \\
+\midrule
+DeepSeek API succeeds & Selects best HPO or returns \texttt{null} \\
+DeepSeek API fails & Falls back to top keyword match (\texttt{keyword\_fallback}) \\
+Candidate pool is empty & Marks symptom as \texttt{(no match found)} \\
+Symptom unmatched & Excluded from inference; does not affect other symptoms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{The Inference Engine}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{True Path Rule}
+
+The fundamental inference rule of the HPO ontology:
+
+\begin{callout}
+\textbf{True Path Rule.} If a disease is associated with a phenotype term $P$, it is implicitly associated with all ancestors (more general terms) and all descendants (more specific terms) of $P$ in the HPO hierarchy.
+\end{callout}
+
+For example, if the user selects \texttt{HP:0001250} (Seizure):
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Direct match:} The disease is directly linked to Seizure $\rightarrow$ full weight.
+  \item \textbf{Child match:} The disease is linked to ``Generalized tonic-clonic seizure'' (a child of Seizure) $\rightarrow$ reduced weight.
+  \item \textbf{Parent match:} The disease is linked to ``Abnormal nervous system physiology'' (a parent of Seizure) $\rightarrow$ reduced weight.
+\end{itemize}
+
+\subsection{Scoring Formula}
+
+For a given set of input HPO terms, each candidate disease receives a cumulative score:
+
+\begin{equation}
+\text{Score}(\text{disease}) = \sum_{\text{matched HPO}} \Big[ \text{freq\_weight} \times \text{multiplier} \times \text{idf\_weight} \Big]
+\end{equation}
+
+Where the multiplier depends on match type:
+
+\begin{equation}
+\text{multiplier} = \begin{cases}
+1.0 & \text{direct match} \\[4pt]
+0.5 \times e^{-(\text{rank}-1)} & \text{indirect match (child or parent)}
+\end{cases}
+\end{equation}
+
+The rank-decay mechanism for indirect matches: within each (disease, input HPO) group, indirect matches are sorted by frequency weight descending, then weighted exponentially. Rank 1 gets 0.5, rank 2 gets $0.5 \times e^{-1} \approx 0.184$, rank 3 gets $0.5 \times e^{-2} \approx 0.068$, and so on.
+
+\begin{callout}
+\textbf{Why rank-decay?} Without it, HPO terms with large descendant trees (e.g., ``Abnormality of the nervous system'' with $50+$ children) would dominate the ranking. Rank-decay ensures only the top 1–2 best-matching children per disease contribute meaningfully.
+\end{callout}
+
+\subsection{IDF Smoothing: Why Standard IDF Fails in Medicine}
+
+Standard TF-IDF uses the raw logarithm:
+
+\begin{equation}
+\text{IDF}_{\text{standard}} = \ln\left(\frac{N_{\text{total}}}{df + 1}\right)
+\end{equation}
+
+With $N \approx 16{,}000$ diseases in the graph, this produces extreme ratios:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Symptom} & \textbf{df (disease count)} & \textbf{Standard IDF} \\
+\midrule
+Fever (common)       & 3,000 & 1.67 \\
+Abdominal pain       & 2,000 & 2.08 \\
+Seizure              & 800   & 3.00 \\
+Purpura              & 200   & 4.38 \\
+Anhidrosis (rare)    & 30    & 6.25 \\
+Angiokeratoma (rare) & 15    & 6.90 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A single rare symptom (IDF $\approx$ 6.9) contributes nearly \textbf{4 times} as much as a common one (IDF $\approx$ 1.7). If the LLM incorrectly matches a rare term, or if the patient happens to mention an incidental rare finding, that single term can single-handedly dominate the ranking—pushing the correct disease out of the top 5.
+
+\subsection{Square-Root Smoothing}
+
+We apply a compressive transformation:
+
+\begin{equation}
+\text{IDF}_{\text{smoothed}} = 1.0 + \sqrt{\;\ln\left(\frac{N_{\text{total}}}{df + 1}\right)\;}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Symptom} & \textbf{Standard IDF} & \textbf{Smoothed IDF} & \textbf{Rare/Common Ratio} \\
+\midrule
+Fever               & 1.67 & 2.29 & — \\
+Abdominal pain      & 2.08 & 2.44 & 1.07$\times$ \\
+Seizure             & 3.00 & 2.73 & 1.19$\times$ \\
+Purpura             & 4.38 & 3.09 & 1.35$\times$ \\
+Anhidrosis          & 6.25 & 3.50 & 1.53$\times$ \\
+Angiokeratoma       & 6.90 & 3.63 & 1.58$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The $\sqrt{\cdot}$ function compresses the rare/common ratio from \textbf{4.1$\times$} down to \textbf{1.6$\times$}. Rare symptoms are still rewarded—they \textit{do} pull rare diseases up the ranking—but they can no longer single-handedly override a disease with several moderately specific matches.
+
+\begin{callout}
+\textbf{Design rationale.} The $+1.0$ base ensures that \textit{every} match contributes at least one unit of score. The $\sqrt{\log(\cdot)}$ term provides a bounded ``rarity bonus'' that distinguishes discriminative symptoms from generic ones without creating instability. Three medium-specificity symptoms (smoothed IDF $\approx$ 2.5 each, total 7.5) will always beat one ultra-rare symptom (smoothed IDF $\approx$ 3.6).
+\end{callout}
+
+\subsection{Dynamic Symptom Elicitation}
+
+After each inference, the system suggests the next most diagnostically useful symptoms to ask about:
+
+\begin{enumerate}[leftmargin=*]
+  \item Collect all HPO terms linked to the top-5 candidate diseases.
+  \item Exclude terms already covered by the True Path Rule (the user's selected HPOs and their ancestors/descendants are already accounted for).
+  \item Score remaining terms by \textbf{discriminative power}:\\
+  $\text{score} = \max\_\text{frequency} \times \text{discriminative\_factor}$\\
+  where discriminative\_factor = 1.0 (appears in 1 disease), 0.5 (2 diseases), 0.25 (3+ diseases).
+  \item Return the top 10.
+\end{enumerate}
+
+A symptom that is Obligate (frequency 1.0) in exactly one of the top-5 diseases is the ideal discriminator—asking about it will immediately confirm or rule out that disease.
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{API Design}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{Endpoint Summary}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Method} & \textbf{Purpose} \\
+\midrule
+\texttt{/} & GET & Frontend SPA \\
+\texttt{/api/health} & GET & Health check + graph statistics \\
+\texttt{/api/predict} & POST & Manual HPO selection $\rightarrow$ inference \\
+\texttt{/api/hpo-search} & GET & Keyword search (name + synonyms + definition) \\
+\texttt{/api/smart-search} & GET & Extraction + hybrid search (guided mode) \\
+\texttt{/api/vector-search} & GET & Pure FAISS search (debugging) \\
+\texttt{/api/auto-diagnose} & GET & \textbf{Zero-click full pipeline} (default for patients) \\
+\texttt{/api/anatomy-tree} & GET & Top-level HPO system categories \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The Auto-Diagnose Endpoint}
+
+This is the primary endpoint for patient-facing use. It accepts free text and returns a complete diagnostic report.
+
+\textbf{Request:}
+\begin{lstlisting}
+GET /api/auto-diagnose?text=burning+pain+in+hands+dark+red+spots+cannot+sweat&mode=public
+\end{lstlisting}
+
+\textbf{Response} (abbreviated):
+\begin{lstlisting}
+{
+  "query_hpo_ids": ["HP:0031006", "HP:0001014", "HP:0000970"],
+  "results": [
+    {
+      "disease_id": "ORPHA:324",
+      "disease_name": "Fabry disease",
+      "total_score": 8.52,
+      "matched_paths": [
+        {
+          "input_hpo_id": "HP:0031006",
+          "match_type": "direct",
+          "contribution": 3.15,
+          "explanation": "matched directly with Acroparesthesia [IDF: 3.50]"
+        }
+      ]
+    }
+  ],
+  "auto_selections": [
+    {
+      "raw_description": "burning pain in hands",
+      "standard_term": "Acroparesthesia",
+      "matched_hpo_id": "HP:0031006",
+      "matched_hpo_name": "Acroparesthesia",
+      "match_method": "llm_rerank"
+    }
+  ]
+}
+\end{lstlisting}
+
+The \texttt{auto\_selections} array provides full transparency: the user can see exactly which of their words was mapped to which HPO term, and whether that mapping came from the LLM reranker (\texttt{llm\_rerank}) or a keyword fallback (\texttt{keyword\_fallback}).
+
+\subsection{Dual-Mode Architecture}
+
+The system supports two display modes via the \texttt{?mode=} parameter:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Feature} & \textbf{Expert Mode} & \textbf{Public Mode (default)} \\
+\midrule
+HPO names & Original medical terms & Layperson translations \\
+HPO IDs & Visible (\texttt{HP:XXXXXXX}) & Hidden \\
+Cytoscape animation & Shown & Skipped (direct to report) \\
+Manual HPO search & Available & Hidden (Smart Match / Auto-Diagnose only) \\
+Auto-Diagnose toggle & Hidden & Visible (default: ON) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Deployment}
+% ═══════════════════════════════════════════════════════════════════════
+
+\subsection{Hardware Requirements}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Resource} & \textbf{Minimum} \\
+\midrule
+CPU & 2 cores \\
+RAM & 4 GB (graph $\approx$ 140 MB + FAISS index $\approx$ 80 MB) \\
+Disk & $\approx$ 500 MB (data files + index) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All NLP and embedding computation is offloaded to cloud APIs (DeepSeek + SiliconFlow). No local models are loaded. The server starts in under 2 seconds.
+
+\subsection{Environment Variables}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Variable} & \textbf{Purpose} \\
+\midrule
+\texttt{DEEPSEEK\_API\_KEY} & DeepSeek API key (symptom extraction + reranking) \\
+\texttt{EMBEDDING\_API\_KEY} & SiliconFlow API key (BAAI/bge-m3 embeddings) \\
+\texttt{EMBEDDING\_BASE\_URL} & Embedding API base URL (default: \texttt{api.siliconflow.cn/v1}) \\
+\texttt{EMBEDDING\_MODEL} & Embedding model name (default: \texttt{BAAI/bge-m3}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Startup Sequence}
+
+\begin{lstlisting}[caption={Deployment commands}]
+cd /path/to/RD
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set API keys
+export DEEPSEEK_API_KEY="sk-..."
+export EMBEDDING_API_KEY="sk-..."
+
+# Build FAISS index (first time, or after nodes.csv changes)
+python3 build_vector_index.py
+
+# Generate layperson translations (optional, for public mode)
+python3 build_layperson_dict.py
+
+# Start server
+python3 main.py
+# or: python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+\end{lstlisting}
+
+\subsection{Concurrency Considerations}
+
+Each \texttt{/api/auto-diagnose} request makes $N+1$ serial API calls to DeepSeek (1 extraction + $N$ reranks, where $N$ is the number of extracted symptoms). With a single uvicorn worker, one request occupies the worker for 3–10 seconds depending on network latency. For production multi-user deployment:
+
+\begin{itemize}[leftmargin=*]
+  \item Use multiple workers: \texttt{uvicorn main:app --workers 4}
+  \item Wrap synchronous API calls in \texttt{asyncio.to\_thread()} to avoid blocking the event loop.
+  \item Parallelize the $N$ reranker calls with \texttt{asyncio.gather()}.
+\end{itemize}
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{File Inventory}
+% ═══════════════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{File} & \textbf{Role} \\
+\midrule
+\texttt{parse\_data.py} & Raw ontology files $\rightarrow$ CSV graph data \\
+\texttt{main.py} & FastAPI backend: graph, endpoints, LLM functions \\
+\texttt{index.html} & Single-file frontend (dossier-style, auto-diagnose toggle) \\
+\texttt{build\_vector\_index.py} & Build FAISS index via cloud embedding API \\
+\texttt{build\_layperson\_dict.py} & Generate layperson translation dictionary \\
+\texttt{nodes.csv} & 35,964 nodes (includes \texttt{definition} column) \\
+\texttt{edges\_hpo.csv} & 23,677 HPO hierarchy edges \\
+\texttt{edges\_disease\_hpo.csv} & 115,878 disease–HPO association edges \\
+\texttt{hpo\_index.faiss} & FAISS index (1024-dim, $\approx$ 80 MB) \\
+\texttt{hpo\_mapping.pkl} & Index position $\rightarrow$ HPO ID/name mapping \\
+\texttt{layperson\_dict.json} & HPO $\rightarrow$ layperson phrase translations \\
+\texttt{requirements.txt} & Python dependencies \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════
+\section{Design Decision Record}
+% ═══════════════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{3.8cm}p{4.2cm}p{4.5cm}@{}}
+\toprule
+\textbf{Decision} & \textbf{Approach} & \textbf{Rationale} \\
+\midrule
+Raw/standard separation & Two independent fields; never concatenated for embedding & Semantic dilution: layperson high-frequency words scatter model attention \\
+\midrule
+Keyword search includes definition & \texttt{search\_hpo} matches against name, synonyms, \textit{and} definition & HPO definitions contain layperson-accessible descriptions (e.g., ``burning\ldots in the hands'') \\
+\midrule
+No keyword fast-path & Keyword and FAISS results merged; all go through DeepSeek reranker & Keyword is too broad post-definition-search; LLM review prevents false positives \\
+\midrule
+Reranker receives full patient text & \texttt{llm\_rerank\_candidates(full\_text=original)} & Single symptom ambiguous in isolation; full clinical picture enables correct disambiguation \\
+\midrule
+IDF sqrt smoothing & $\text{IDF} = 1 + \sqrt{\ln(N/df)}$ & Standard log-IDF is too steep for medicine (rare symptom = 4$\times$ common); sqrt compresses to 1.6$\times$ \\
+\midrule
+Extraction prompt with counter-examples & Show \textit{what not to output}: ``Angiokeratoma (not purpura)'' & LLMs default to generic clinical terms; explicit negatives steer toward precise HPO names \\
+\midrule
+FAISS index includes definition & Embed \texttt{Name: X | Definition: ...} not just name & Definition contains layperson synonyms; bridges the semantic gap that pure-name embedding cannot \\
+\midrule
+Instruction prefix on query only & Prefix added to query embeddings; index embeddings have no prefix & Asymmetric BGE encoding: query-as-search-intent vs. document-as-passive-passage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{1cm}
+\begin{center}
+\rule{0.4\textwidth}{0.4pt}\\[0.5cm]
+{\small iGEM 2026 · PekingHSC · CC-BY-4.0}
+\end{center}
+
+\end{document}

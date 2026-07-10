@@ -17,3 +17,10 @@ en_product4.xml
 # Python
 __pycache__/
 *.pyc
+
+# Frontend
+frontend/node_modules/
+# Keep frontend/dist tracked so servers can deploy without Node.js
+
+# Secrets
+.env

@@ -153,6 +153,7 @@ def parse_hp_json(path: str) -> Tuple[List[dict], List[dict]]:
             "name": name,
             "type": "Phenotype",
             "synonyms": synonyms_str,
+            "definition": node.get("meta", {}).get("definition", {}).get("val", ""),
         })
 
     if skip_count:
@@ -241,7 +242,8 @@ def parse_ordo_owl(path: str) -> List[dict]:
             "id": disease_id,
             "name": name,
             "type": "Disease",
-            "synonyms": "",  # ORDO classes don't carry synonyms in this file
+            "synonyms": "",   # ORDO classes don't carry synonyms
+            "definition": "",  # diseases don't have HPO-style definitions
         })
 
     if skip_count:
@@ -338,7 +340,7 @@ def merge_nodes(hpo_nodes: List[dict], disease_nodes: List[dict]) -> List[List[s
             if n["id"] in seen:
                 continue
             seen.add(n["id"])
-            rows.append([n["id"], n["name"], n["type"], n["synonyms"]])
+            rows.append([n["id"], n["name"], n["type"], n["synonyms"], n.get("definition", "")])
 
     return rows
 
@@ -397,7 +399,7 @@ def main():
     nodes_rows = merge_nodes(hpo_nodes, disease_nodes)
     write_csv(
         os.path.join(output_dir, "nodes.csv"),
-        header=["id", "name", "type", "synonyms"],
+        header=["id", "name", "type", "synonyms", "definition"],
         rows=nodes_rows,
     )
 

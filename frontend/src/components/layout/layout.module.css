@@ -1,0 +1,164 @@
+/* ── Header ── */
+.header {
+  position: relative;
+  overflow: hidden;
+  color: var(--brand-ink);
+  background:
+    radial-gradient(120% 140% at 90% -20%, rgba(184, 217, 46, 0.16), transparent 55%),
+    linear-gradient(120deg, var(--brand-2) 0%, var(--brand) 62%, #124e37 100%);
+  border-bottom: 1px solid var(--brand-2);
+}
+.headerGrain {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.035) 0 1px,
+    transparent 1px 13px
+  );
+  pointer-events: none;
+}
+.helix {
+  position: absolute;
+  top: 50%;
+  right: -40px;
+  transform: translateY(-50%);
+  height: 190%;
+  width: auto;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.headerInner {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 34px) clamp(18px, 4vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.mark {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(184, 217, 46, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: grid;
+  place-items: center;
+}
+.brandText {
+  min-width: 0;
+}
+.title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: clamp(1.35rem, 2.6vw, 1.95rem);
+  line-height: 1.08;
+  letter-spacing: -0.4px;
+}
+.tagline {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  color: rgba(233, 245, 236, 0.72);
+}
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.kickerBadge {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--spark);
+}
+
+/* ── Assurance bar ── */
+.assurance {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.assuranceInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 10px clamp(18px, 4vw, 40px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+}
+.assuranceItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2px;
+  color: var(--ink-soft);
+}
+.assuranceTick {
+  color: var(--brand);
+  flex-shrink: 0;
+}
+.assuranceSep {
+  width: 1px;
+  height: 12px;
+  background: var(--line-2);
+}
+
+/* ── Main shell ── */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(20px, 3.5vw, 40px) clamp(18px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.footerInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px clamp(18px, 4vw, 40px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.3px;
+  color: var(--ink-mute);
+}
+
+@media (max-width: 620px) {
+  .headerInner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .headerRight {
+    align-items: flex-start;
+  }
+}

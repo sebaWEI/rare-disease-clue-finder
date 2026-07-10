@@ -129,9 +129,8 @@ def call_llm(api_base: str, api_key: str, model: str,
     payload = {"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.1}
     try:
         resp = requests.post(url,
-            headers={"Authorization": f"Bearer {api_key}",
-                     "Content-Type": "application/json; charset=utf-8"},
-            data=json.dumps(payload, ensure_ascii=True).encode("utf-8"),
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=payload,
             timeout=(10, 60))
     except Exception as exc:
         print(f"   ⚠  Network error: {exc}", file=sys.stderr)

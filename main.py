@@ -31,32 +31,77 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import faiss
 import networkx as nx
 import numpy as np
-try:
-    import spacy
-except ImportError:
-    spacy = None  # scispacy not installed — semantic search falls back to regex
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from openai import OpenAI
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from sentence_transformers import SentenceTransformer
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
+def _load_dotenv(path: str) -> None:
+    """Load KEY=VALUE pairs from a .env file into os.environ (no overwrite)."""
+    if not os.path.isfile(path):
+        return
+    try:
+        with open(path, encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = value
+    except OSError as exc:
+        print(f"⚠  Could not read .env: {exc}")
+
+
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_load_dotenv(os.path.join(_BASE_DIR, ".env"))
+
 DATA_DIR = os.environ.get(
     "DATA_DIR",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ""),
+    os.path.join(_BASE_DIR, ""),
 )
-FRONTEND_INDEX_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+# React (Vite) production build lives in frontend/dist.
+FRONTEND_DIST_DIR = os.path.join(_BASE_DIR, "frontend", "dist")
+FRONTEND_INDEX_PATH = os.path.join(FRONTEND_DIST_DIR, "index.html")
 NODES_CSV = os.path.join(DATA_DIR, "nodes.csv")
 EDGES_HPO_CSV = os.path.join(DATA_DIR, "edges_hpo.csv")
 EDGES_DISEASE_HPO_CSV = os.path.join(DATA_DIR, "edges_disease_hpo.csv")
 FAISS_INDEX_PATH = os.path.join(DATA_DIR, "hpo_index.faiss")
 FAISS_MAPPING_PATH = os.path.join(DATA_DIR, "hpo_mapping.pkl")
 LAYERSON_DICT_PATH = os.path.join(DATA_DIR, "layperson_dict.json")
-VECTOR_MODEL_NAME = "all-MiniLM-L6-v2"
+LAYERSON_DICT_ZH_PATH = os.path.join(DATA_DIR, "layperson_dict_zh.json")
+HPO_NAMES_ZH_PATH = os.path.join(DATA_DIR, "hpo_names_zh.json")
+DISEASE_DICT_ZH_PATH = os.path.join(DATA_DIR, "disease_names_zh.json")
+
+# --- API clients (cloud-based, replaces local models) ---
+
+# 1. DeepSeek client — for symptom NER extraction (Phase 8)
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-your-deepseek-key")
+deepseek_client = OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url="https://api.deepseek.com",
+)
+
+# 2. Embedding client — for FAISS vector search (Phase 6)
+#    SiliconFlow provides free BAAI/bge-m3 (1024-dim), OpenAI-compatible
+EMBEDDING_API_KEY = os.environ.get("EMBEDDING_API_KEY", "sk-your-embedding-key")
+EMBEDDING_BASE_URL = os.environ.get("EMBEDDING_BASE_URL", "https://api.siliconflow.cn/v1")
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "BAAI/bge-m3")
+EMBEDDING_DIM = 1024  # bge-m3 dimension
+
+embedding_client = OpenAI(
+    api_key=EMBEDDING_API_KEY,
+    base_url=EMBEDDING_BASE_URL,
+)
 
 # Inference multipliers (True Path Rule)
 SCORE_DIRECT    = 1.0   # disease has the exact HPO term
@@ -67,6 +112,11 @@ BASE_INDIRECT   = 0.5   # base weight for child/parent matches
 PARENT_MAX_HOPS = 2     # limit ancestor traversal depth
 
 TOP_N = 5              # number of diseases to return
+TOP_CORE_TIER1 = 15    # top K from Obligate+Very Frequent (freq >= 0.9) for explained ratio
+TOP_CORE_TIER2 = 15    # top K from Frequent (0.55 <= freq < 0.9) for explained ratio
+                        # Two-tier ensures both textbook signs AND clinically reportable
+                        # symptoms contribute to the denominator.
+COVERAGE_EXPONENT = 0.3  # power-law smoothing: f(x)=x^α maps 10%→50%, preserves 0→0, 1→1
 
 # Phase 10: Biomarker patterns for calibrated keyword boosting
 import re as _re
@@ -118,11 +168,19 @@ class MatchedPath(BaseModel):
     explanation: str         # human-readable string
 
 
+class MissingCriticalHPO(BaseModel):
+    """A missing obligate symptom flagged for triage / secondary confirmation."""
+    hpo_id: str
+    name: str  # mode+lang resolved display name
+
+
 class DiseasePrediction(BaseModel):
     disease_id: str
     disease_name: str
-    total_score: float
+    total_score: float                     # match strength (IC-weighted)
     matched_paths: List[MatchedPath]
+    explained_ratio: float = 0.0           # patient core IC / disease core IC
+    missing_critical_hpos: List[MissingCriticalHPO] = []  # top 2-3 missing obligate HPOs
 
 
 class SuggestedHPO(BaseModel):
@@ -131,10 +189,68 @@ class SuggestedHPO(BaseModel):
     reason: str
 
 
+class AutoSelection(BaseModel):
+    """Trace of how a free-text symptom was auto-mapped to an HPO term."""
+    raw_description: str
+    standard_term: str
+    matched_hpo_id: str
+    matched_hpo_name: str
+    match_method: str  # "llm_rerank" | "keyword_fallback" | "none"
+
+
+class SymptomLog(BaseModel):
+    """Per-symptom computation trace for the explainability log."""
+    raw_description: str
+    standard_term: str
+    keyword_candidates: List[Dict[str, str]] = []   # [{hpo_id, name, match_field}]
+    faiss_candidates: List[Dict[str, Any]] = []     # [{hpo_id, name, score}]
+    reranker_selection: Optional[str] = None         # selected hpo_id or None (rejected)
+    reranker_rejected: bool = False                  # True if DeepSeek returned null
+    selected_hpo_id: str = ""
+    selected_hpo_name: str = ""
+    match_method: str = ""
+
+
+class ContributionLog(BaseModel):
+    """Single contribution trace in the inference engine."""
+    hpo_id: str
+    hpo_name: str
+    match_type: str          # direct | child | parent
+    frequency_weight: float
+    multiplier: float
+    idf_weight: float
+    contribution: float
+
+
+class DiseaseScoreLog(BaseModel):
+    """Per-disease score breakdown."""
+    disease_id: str
+    disease_name: str
+    total_score: float
+    explained_ratio: float = 0.0
+    contributions: List[ContributionLog] = []
+
+
+class InferenceLog(BaseModel):
+    """True Path Rule inference computation trace."""
+    total_diseases: int = 0
+    input_hpo_ids: List[str] = []
+    disease_scores: List[DiseaseScoreLog] = []
+
+
+class ComputationLog(BaseModel):
+    """Full computation trace for explainability."""
+    extraction: Dict[str, Any] = {}
+    symptoms: List[SymptomLog] = []
+    inference: InferenceLog = InferenceLog()
+
+
 class PredictResponse(BaseModel):
     query_hpo_ids: List[str]
     results: List[DiseasePrediction]
     suggested_hpos: List[SuggestedHPO] = []
+    auto_selections: List[AutoSelection] = []       # populated by auto-diagnose mode
+    computation_log: Optional[ComputationLog] = None # detailed trace when verbose
 
 
 class HPOSearchResult(BaseModel):
@@ -176,6 +292,35 @@ class HealthResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Phase 15: Missing-symptom layperson descriptions (DeepSeek)
+# ---------------------------------------------------------------------------
+
+class DiseasePredictionSummary(BaseModel):
+    """Lightweight disease prediction for the describe-missing endpoint."""
+    disease_id: str
+    disease_name: str
+    matched_hpo_names: List[str] = []        # HPO names the patient DOES have
+    missing_hpo_names: List[str] = []         # HPO names the patient is MISSING
+    explained_ratio: float = 0.0
+
+
+class DescribeMissingRequest(BaseModel):
+    original_text: str                        # patient's original symptom narrative
+    predictions: List[DiseasePredictionSummary]  # top-5 disease summaries
+    lang: str = "en"                          # "en" or "zh"
+
+
+class DiseaseDescription(BaseModel):
+    disease_id: str
+    disease_name: str
+    description: str                          # DeepSeek-generated plain-language description
+
+
+class DescribeMissingResponse(BaseModel):
+    descriptions: List[DiseaseDescription]
+
+
+# ---------------------------------------------------------------------------
 # Graph Manager
 # ---------------------------------------------------------------------------
 
@@ -207,6 +352,14 @@ class DiseaseGraph:
         self._disease_id_to_name: Dict[str, str] = {}
         self._hpo_to_diseases: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
         self._disease_to_hpos: Dict[str, List[Tuple[str, float]]] = defaultdict(list)
+        self._hpo_idf: Dict[str, float] = {}                    # pre-computed sqrt-smoothed IDF per HPO
+        self._disease_core_ic_sum: Dict[str, float] = {}        # Σ(freq × idf) for top-K core HPOs
+        self._disease_top_core_hpos: Dict[str, List[Tuple[str, float, float]]] = {}  # disease_id → [(hpo_id, freq, idf)]
+        # True Path Rule: pre-computed annotation closure (disease → all ancestors of its HPOs)
+        self._expanded_disease_hpos: Dict[str, Dict[str, Tuple[str, float]]] = {}
+        # disease_id → {ancestor_hpo: (original_source_hpo, freq_weight)}
+        # Inverted index for O(1) lookup: hpo_id → [(disease_id, source_hpo, freq)]
+        self._hpo_to_expanded_diseases: Dict[str, List[Tuple[str, str, float]]] = defaultdict(list)
 
     # ------------------------------------------------------------------
     # Loading
@@ -219,6 +372,7 @@ class DiseaseGraph:
         self._load_hpo_edges()
         self._load_disease_hpo_edges()
         self._build_lookups()
+        self._build_expanded_disease_hpos()
 
     def _check_files(self) -> None:
         """Verify all three input CSVs exist."""
@@ -241,11 +395,13 @@ class DiseaseGraph:
                 node_type = row["type"]
                 name = row["name"]
                 synonyms = row.get("synonyms", "")
+                definition = row.get("definition", "")
                 self.G.add_node(
                     node_id,
                     name=name,
                     type=node_type,
                     synonyms=synonyms,
+                    definition=definition,
                 )
                 if node_type == "Phenotype":
                     self._hpo_id_to_name[node_id] = name
@@ -289,41 +445,184 @@ class DiseaseGraph:
         print(f"   ✓  {count:,} disease→HPO edges loaded", flush=True)
 
     def _build_lookups(self) -> None:
-        """Pre-compute fast-access lookup dictionaries.
+        """Pre-compute static lookup tables: HPO IDF scores + disease core IC sums.
 
-        The defaultdict-based _hpo_to_diseases / _disease_to_hpos are
-        built during edge loading above (O(1) amortised per edge), so
-        this method is mainly a placeholder for future index builds.
+        IDF (sqrt-smoothed Information Content):
+            idf = 1.0 + sqrt(log(total_diseases / (df + 1)))
+        Same formula as used in predict() — ensures explained_ratio is
+        consistent with match strength scoring.
+
+        Core threshold: freq_weight >= 0.55 (Obligate + Very frequent + Frequent).
+        Denominator = Σ(freq × idf) for each disease's core HPOs — computed
+        once at startup, used as O(1) division in predict().
         """
-        pass
+        total_diseases = max(1, len(self._disease_id_to_name))
+
+        # --- Step 1: IDF per HPO ---
+        for hpo_id, disease_list in self._hpo_to_diseases.items():
+            df = len(disease_list)
+            if df == 0:
+                self._hpo_idf[hpo_id] = 1.0
+            else:
+                raw_idf = math.log(total_diseases / (df + 1))
+                self._hpo_idf[hpo_id] = 1.0 + math.sqrt(raw_idf)
+
+        # --- Step 2: Two-tier core IC sum per disease ---
+        # Tier 1: Obligate + Very Frequent (freq >= 0.9) — textbook diagnostic markers
+        # Tier 2: Frequent (0.55 <= freq < 0.9) — clinically reportable symptoms
+        #
+        # Taking top K from EACH tier ensures the denominator includes BOTH
+        # highly discriminative but rarely-reported markers (enzyme levels, biopsy)
+        # AND symptoms patients actually complain about (pain, proteinuria).
+        # A single global Top-K gets dominated by tier-1 high-IDF terms.
+        for disease_id, hpo_list in self._disease_to_hpos.items():
+            tier1: List[Tuple[str, float, float]] = []  # freq >= 0.9
+            tier2: List[Tuple[str, float, float]] = []  # 0.55 <= freq < 0.9
+            for hpo_id, freq_weight in hpo_list:
+                if freq_weight >= 0.9:
+                    idf_val = self._hpo_idf.get(hpo_id, 1.0)
+                    tier1.append((hpo_id, freq_weight, idf_val))
+                elif freq_weight >= 0.55:
+                    idf_val = self._hpo_idf.get(hpo_id, 1.0)
+                    tier2.append((hpo_id, freq_weight, idf_val))
+            # Sort each tier by IDF descending
+            tier1.sort(key=lambda x: x[2], reverse=True)
+            tier2.sort(key=lambda x: x[2], reverse=True)
+            # Take top K from each tier
+            top_k = tier1[:TOP_CORE_TIER1] + tier2[:TOP_CORE_TIER2]
+            self._disease_top_core_hpos[disease_id] = top_k
+            # Denominator = Σ(freq × idf) for these top-K HPOs
+            core_sum = sum(freq * idf for _, freq, idf in top_k)
+            self._disease_core_ic_sum[disease_id] = core_sum
+
+        print(f"   ✓  {len(self._hpo_idf):,} HPO IDFs computed", flush=True)
+        print(f"   ✓  {len(self._disease_core_ic_sum):,} disease core IC sums"
+              f" (tier1-{TOP_CORE_TIER1}+tier2-{TOP_CORE_TIER2}) computed", flush=True)
+
+    def _build_expanded_disease_hpos(self) -> None:
+        """Pre-compute True Path Rule annotation closure.
+
+        For each disease, expand its directly annotated HPOs upward through
+        the 'is_a' hierarchy to include all ancestors (more general terms).
+        This is the standard ontology inference: if a disease has "Generalized
+        seizure", it also has "Seizure" and "Abnormal nervous system physiology".
+
+        Stores:
+          _expanded_disease_hpos[disease][ancestor_hpo] = (source_hpo, freq_weight)
+          _hpo_to_expanded_diseases[hpo] = [(disease_id, source_hpo, freq_weight), ...]
+        """
+        print("🧬 Building True Path Rule annotation closure ...", flush=True)
+        total_ancestors = 0
+        for disease_id, hpo_list in self._disease_to_hpos.items():
+            expanded: Dict[str, Tuple[str, float]] = {}
+            for hpo_id, freq_weight in hpo_list:
+                # The HPO itself is part of the closure
+                if hpo_id not in expanded or freq_weight > expanded[hpo_id][1]:
+                    expanded[hpo_id] = (hpo_id, freq_weight)
+                # All ancestors (more general) up the hierarchy
+                try:
+                    for ancestor in nx.descendants(self.G, hpo_id):
+                        if ancestor in self._hpo_id_to_name:
+                            if ancestor not in expanded or freq_weight > expanded[ancestor][1]:
+                                expanded[ancestor] = (hpo_id, freq_weight)
+                except nx.NetworkXError:
+                    pass
+            self._expanded_disease_hpos[disease_id] = expanded
+            total_ancestors += len(expanded)
+            # Build inverted index
+            for ancestor, (source_hpo, freq_weight) in expanded.items():
+                self._hpo_to_expanded_diseases[ancestor].append(
+                    (disease_id, source_hpo, freq_weight)
+                )
+
+        avg_closure = total_ancestors / max(1, len(self._disease_to_hpos))
+        print(f"   ✓  {total_ancestors:,} total expanded HPOs "
+              f"({avg_closure:.1f} avg per disease)", flush=True)
+        total_indexed = len(self._hpo_to_expanded_diseases)
+        print(f"   ✓  {total_indexed:,} HPOs in inverted disease index", flush=True)
 
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------
 
-    def predict(self, hpo_ids: List[str]) -> List[DiseasePrediction]:
-        """Run the True Path Rule inference for a set of HPO IDs.
-
-        Algorithm (per input HPO term, per disease)
-        -------------------------------------------
-        1. Direct Match  (×1.0):  the disease is linked to this exact HPO.
-        2. Child & Parent (×rank-decay): the disease is linked to child or
-           parent terms. Within each (disease, input HPO) group, indirect
-           matches are sorted by frequency_weight descending, then:
-             rank 1 → 0.5, rank 2 → 0.5×e⁻¹≈0.184, rank 3 → 0.5×e⁻²≈0.068, ...
-           This prevents diseases with large descendant trees from dominating
-           the ranking, while still giving full weight (0.5) to the best match.
-
-        Score(disease) = Σ [ frequency_weight × score_multiplier ]
+    def _compute_disease_concern(
+        self,
+        disease_id: str,
+        tpr_matched_source_hpos: Set[str],
+    ) -> Tuple[float, List[MissingCriticalHPO]]:
+        """Compute explained ratio + missing critical symptoms.
 
         Parameters
         ----------
-        hpo_ids : list of str
-            HPO terms provided by the user (e.g. ["HP:0001250", "HP:0100022"]).
+        disease_id : str
+            The disease to evaluate.
+        tpr_matched_source_hpos : set of str
+            The disease's directly-annotated HPO IDs that were matched
+            via True Path Rule (patient input overlaps with the disease's
+            annotation closure). TPR already guarantees hierarchy coverage:
+            if patient inputs "Seizure" and disease has "Generalized seizure",
+            "Generalized seizure" appears here — no separate tree traversal needed.
 
         Returns
         -------
-        list of DiseasePrediction (top TOP_N, sorted by total_score desc).
+        (explained_ratio, missing_critical_hpos)
+        """
+        core_total = self._disease_core_ic_sum.get(disease_id, 0.0)
+        if core_total <= 0:
+            return 0.0, []
+
+        # --- Gold-core set: Top-K HPO IDs that define the denominator ---
+        # Numerator only counts matches inside this set — strict isolation from
+        # predict()'s full-match loop. The denominator is also built from this
+        # exact set (pre-computed in _build_lookups), so ratio is self-consistent.
+        gold_core_set = {hpo_id for hpo_id, _, _ in self._disease_top_core_hpos.get(disease_id, [])}
+
+        core_matched_ic = 0.0
+        obligate_missing: List[Tuple[str, str, float]] = []
+
+        for hpo_id, freq_weight in self._disease_to_hpos.get(disease_id, []):
+            is_matched = hpo_id in tpr_matched_source_hpos
+            idf_val = self._hpo_idf.get(hpo_id, 1.0)
+
+            # Numerator: only gold-core HPOs that the patient actually matched
+            if hpo_id in gold_core_set and is_matched:
+                core_matched_ic += freq_weight * idf_val
+
+            # Missing critical: freq >= 0.9 AND not matched (independent check)
+            if freq_weight >= 0.9 and not is_matched:
+                hpo_name = self._hpo_id_to_name.get(hpo_id, hpo_id)
+                obligate_missing.append((hpo_id, hpo_name, idf_val))
+
+        raw_ratio = core_matched_ic / core_total
+        # Power-law smoothing: f(x) = x^α  maps 10%→50%, 0→0, 1→1
+        # Prevents multi-system diseases from showing single-digit coverage
+        # when 3-5 common but non-top symptoms all match.
+        explained_ratio = raw_ratio ** COVERAGE_EXPONENT
+
+        # --- Missing obligates: sort by IDF desc, take top 3 ---
+        obligate_missing.sort(key=lambda x: x[2], reverse=True)
+        top_missing = [
+            MissingCriticalHPO(hpo_id=hid, name=name)
+            for hid, name, _ in obligate_missing[:3]
+        ]
+
+        return explained_ratio, top_missing
+
+    # ------------------------------------------------------------------
+    # Inference
+
+    def predict(self, hpo_ids: List[str]) -> List[DiseasePrediction]:
+        """Run True Path Rule inference via pre-computed annotation closure.
+
+        True Path Rule (standard ontology inference):
+          If a disease has HPO:Child, it also has HPO:Parent, HPO:Grandparent, …
+          This is pre-computed at startup as _expanded_disease_hpos.
+
+        At query time, matching is O(1) dictionary lookup — no graph traversal.
+        One user symptom → one best evidence path per disease (no duplicate
+        scoring from fine-grained annotations).
+
+        Score(disease) = Σ [ frequency_weight × 1.0 × IDF ]
         """
         # --- Validate inputs ---
         valid_hpos: List[str] = []
@@ -337,109 +636,55 @@ class DiseaseGraph:
         if not valid_hpos:
             raise ValueError("None of the provided HPO IDs were recognised.")
 
-        # --- Accumulate scores per disease ---
-        # disease_scores[disease_id] = total_score
-        # disease_paths[disease_id] = list of MatchedPath
         disease_scores: Dict[str, float] = defaultdict(float)
         disease_paths: Dict[str, List[MatchedPath]] = defaultdict(list)
+        # For concern: per disease, which directly-annotated HPOs were matched via TPR?
+        # TPR closure guarantees: if patient inputs an ancestor, the disease's more
+        # specific child HPO IS covered. No need for separate hierarchy traversal.
+        tpr_matched_source_hpos: Dict[str, Set[str]] = defaultdict(set)
+        total_diseases = max(1, len(self._disease_id_to_name))
 
         for input_hpo in valid_hpos:
             input_name = self._hpo_id_to_name.get(input_hpo, input_hpo)
 
-            # --- Step A: expand input HPO → which HPOs does it cover? ---
-            # Collect matched HPOs grouped by match_type (no multiplier yet —
-            # that will be assigned per-disease based on rank within the group)
-            direct_targets  = [input_hpo]
-            child_targets   = []
-            parent_targets  = []
+            # Per (disease_id, input_hpo), keep only the best source HPO
+            # (highest freq_weight) from the annotation closure.
+            # This prevents ontology annotation bias: a disease with 3 child
+            # terms all expanding to the same ancestor gets scored once, not 3×.
+            best_per_disease: Dict[str, Tuple[str, float]] = {}  # disease_id → (source_hpo, freq_weight)
+            for disease_id, source_hpo, freq_weight in self._hpo_to_expanded_diseases.get(input_hpo, []):
+                if disease_id not in best_per_disease or freq_weight > best_per_disease[disease_id][1]:
+                    best_per_disease[disease_id] = (source_hpo, freq_weight)
 
-            # Children (more specific terms)
-            try:
-                for child_hpo in nx.ancestors(self.G, input_hpo):
-                    if child_hpo in self._hpo_id_to_name:
-                        child_targets.append(child_hpo)
-            except nx.NetworkXError:
-                pass
+            for disease_id, (source_hpo, freq_weight) in best_per_disease.items():
+                # Track BOTH the source HPO AND the input HPO — they may differ
+                # when TPR matches via ancestor propagation.
+                tpr_matched_source_hpos[disease_id].add(source_hpo)
+                tpr_matched_source_hpos[disease_id].add(input_hpo)
+                source_name = self._hpo_id_to_name.get(source_hpo, source_hpo)
+                match_type = "direct" if source_hpo == input_hpo else "tpr"
 
-            # Parents (more general terms, up to 2 hops)
-            try:
-                sp_len = nx.single_source_shortest_path_length(
-                    self.G, input_hpo, cutoff=PARENT_MAX_HOPS
+                mult = SCORE_DIRECT
+                df = len(self._hpo_to_diseases.get(source_hpo, []))
+                raw_idf = math.log(total_diseases / (df + 1))
+                idf = 1.0 + math.sqrt(raw_idf)
+                contribution = freq_weight * mult * idf
+                disease_scores[disease_id] += contribution
+                disease_paths[disease_id].append(
+                    MatchedPath(
+                        input_hpo_id=input_hpo,
+                        input_hpo_name=input_name,
+                        matched_hpo_id=source_hpo,
+                        matched_hpo_name=source_name,
+                        match_type=match_type,
+                        frequency_weight=freq_weight,
+                        score_multiplier=mult,
+                        contribution=round(contribution, 4),
+                        explanation=self._build_explanation(
+                            input_name, source_name, match_type, freq_weight
+                        ) + f" [IDF: {round(idf, 2)}]",
+                    )
                 )
-                for node, dist in sp_len.items():
-                    if dist >= 1 and node in self._hpo_id_to_name:
-                        parent_targets.append(node)
-            except nx.NetworkXError:
-                pass
-
-            # --- Step B: group all matches by disease ---
-            # disease_matches[disease_id] = [(matched_hpo, match_type,
-            #                                  freq_weight, matched_name), ...]
-            disease_matches: Dict[str, List[Tuple[str, str, float, str]]] = defaultdict(list)
-
-            for match_type, hpo_list in [
-                ("direct", direct_targets),
-                ("child",  child_targets),
-                ("parent", parent_targets),
-            ]:
-                for matched_hpo in hpo_list:
-                    matched_name = self._hpo_id_to_name.get(matched_hpo, matched_hpo)
-                    for disease_id, freq_weight in self._hpo_to_diseases.get(matched_hpo, []):
-                        disease_matches[disease_id].append(
-                            (matched_hpo, match_type, freq_weight, matched_name)
-                        )
-
-            # --- Step C: score each disease with rank-based indirect decay ---
-            for disease_id, matches in disease_matches.items():
-                # Separate direct vs indirect
-                direct   = [m for m in matches if m[1] == "direct"]
-                indirect = [m for m in matches if m[1] in ("child", "parent")]
-
-                # Sort indirect by frequency_weight descending (highest freq first)
-                indirect.sort(key=lambda m: m[2], reverse=True)
-
-                # Direct matches: ×1.0
-                for matched_hpo, match_type, freq_weight, matched_name in direct:
-                    mult = SCORE_DIRECT
-                    contribution = freq_weight * mult
-                    disease_scores[disease_id] += contribution
-                    disease_paths[disease_id].append(
-                        MatchedPath(
-                            input_hpo_id=input_hpo,
-                            input_hpo_name=input_name,
-                            matched_hpo_id=matched_hpo,
-                            matched_hpo_name=matched_name,
-                            match_type=match_type,
-                            frequency_weight=freq_weight,
-                            score_multiplier=mult,
-                            contribution=round(contribution, 4),
-                            explanation=self._build_explanation(
-                                input_name, matched_name, match_type, freq_weight
-                            ),
-                        )
-                    )
-
-                # Indirect matches: rank-based decay
-                # Rank 1 → 0.5, Rank 2 → 0.5×e⁻¹≈0.184, Rank 3 → 0.5×e⁻²≈0.068, ...
-                for rank, (matched_hpo, match_type, freq_weight, matched_name) in enumerate(indirect, 1):
-                    mult = BASE_INDIRECT * math.exp(-(rank - 1))
-                    contribution = freq_weight * mult
-                    disease_scores[disease_id] += contribution
-                    disease_paths[disease_id].append(
-                        MatchedPath(
-                            input_hpo_id=input_hpo,
-                            input_hpo_name=input_name,
-                            matched_hpo_id=matched_hpo,
-                            matched_hpo_name=matched_name,
-                            match_type=match_type,
-                            frequency_weight=freq_weight,
-                            score_multiplier=round(mult, 4),
-                            contribution=round(contribution, 4),
-                            explanation=self._build_explanation(
-                                input_name, matched_name, match_type, freq_weight
-                            ),
-                        )
-                    )
 
         # --- Sort & truncate ---
         ranked = sorted(disease_scores.items(), key=lambda x: x[1], reverse=True)
@@ -454,12 +699,18 @@ class DiseaseGraph:
                 key=lambda p: p.contribution,
                 reverse=True,
             )
+            matched_source_set = tpr_matched_source_hpos.get(disease_id, set())
+            explained_ratio, missing_critical = self._compute_disease_concern(
+                disease_id, matched_source_set
+            )
             results.append(
                 DiseasePrediction(
                     disease_id=disease_id,
                     disease_name=disease_name,
                     total_score=round(score, 4),
                     matched_paths=paths,
+                    explained_ratio=round(explained_ratio, 4),
+                    missing_critical_hpos=missing_critical,
                 )
             )
 
@@ -511,6 +762,11 @@ class DiseaseGraph:
                 synonyms = node_data.get("synonyms", "")
                 if synonyms:
                     idx = synonyms.lower().find(query_lower)
+            if idx == -1:
+                # Also search definition (bridges layperson terms to HPO)
+                definition = node_data.get("definition", "")
+                if definition:
+                    idx = definition.lower().find(query_lower)
             if idx != -1:
                 scored.append((idx, hpo_id, name))
         # Sort: earlier match first, shorter name first
@@ -665,22 +921,42 @@ class DiseaseGraph:
 
 # ── Global graph instance (loaded at startup) ──
 graph: Optional[DiseaseGraph] = None
-vector_model: Optional[SentenceTransformer] = None
 vector_index: Optional[Any] = None   # faiss.Index
 vector_mapping: List[Dict[str, str]] = []  # [{hpo_id, name}, ...]
-nlp: Optional[Any] = None                  # scispacy model
 layperson_dict: Dict[str, str] = {}  # HP:XXXXXXX → layperson phrase
+layperson_dict_zh: Dict[str, str] = {}  # HP:XXXXXXX → 中文通俗说法
+hpo_names_zh: Dict[str, str] = {}       # HP:XXXXXXX → 中文专业术语
+disease_dict_zh: Dict[str, str] = {}   # ORPHA:ID → 中文疾病名
 
 
-def resolve_name(hpo_id: str, fallback_name: str, mode: str = "expert") -> str:
-    """Return the display name for an HPO term based on mode.
+def resolve_name(hpo_id: str, fallback_name: str, mode: str = "expert",
+                 lang: str = "en") -> str:
+    """Return the display name for an HPO term based on mode and language.
 
-    - expert mode: returns the original HPO name
+    - expert mode: returns the original HPO name (or Chinese medical term)
     - public mode: returns the layperson translation if available,
       otherwise falls back to the original name
+
+    lang="zh": uses Chinese dictionaries (layperson_dict_zh / hpo_names_zh).
+           Falls back to English if the zh dict is missing or key absent.
     """
+    if lang == "zh":
+        if mode == "public" and hpo_id in layperson_dict_zh:
+            return layperson_dict_zh[hpo_id]
+        if hpo_id in hpo_names_zh:
+            # expert mode in zh: use Chinese medical term
+            # public mode without zh layperson: also use Chinese medical term as fallback
+            return hpo_names_zh[hpo_id]
+        # zh dicts not available → fall through to English
     if mode == "public" and hpo_id in layperson_dict:
         return layperson_dict[hpo_id]
+    return fallback_name
+
+
+def resolve_disease_name(disease_id: str, fallback_name: str, lang: str = "en") -> str:
+    """Return the display name for a disease based on language."""
+    if lang == "zh" and disease_id in disease_dict_zh:
+        return disease_dict_zh[disease_id]
     return fallback_name
 
 
@@ -711,87 +987,232 @@ def resolve_parent_hint(hpo_id: str) -> str:
     return ""
 
 
-def extract_symptom_fragments(text: str) -> List[str]:
-    """Use SciSpacy to extract symptom fragments from a free-text description.
+def extract_symptom_fragments(text: str, lang: str = "en") -> List[Dict[str, str]]:
+    """Use DeepSeek API for zero-shot medical entity extraction + HPO-aligned standardization.
 
-    Strategy:
-    1. Pre-split by top-level conjunctions (and, also, commas) to isolate
-       independent symptom mentions.
-    2. For each sub-sentence, extract named entities (doc.ents) and noun
-       chunks (doc.noun_chunks).
-    3. Clean: strip leading determiners/pronouns, deduplicate.
-    4. Falls back to regex split if the NLP model is unavailable.
+    Returns a list of dicts with two keys:
+      - "raw":   the user's original layperson description (for UI display)
+      - "standard": a medical term as close as possible to HPO ontology vocabulary
+                     (for FAISS vector search — NO raw_description mixed in)
+
+    The separation is critical: mixing raw + standard in one embedding string
+    causes "semantic dilution" — the model's attention is scattered across
+    high-frequency layperson words (hands, feet, pain), drowning out the
+    precise medical signal needed for HPO ontology matching.
+
+    When lang="zh", the input is Chinese and the prompt instructs DeepSeek
+    to map Chinese symptoms to English HPO terms for downstream search.
+
+    Falls back to regex split on API failure.
     """
-    if nlp is None:
+    text = text.strip()
+    if not text:
+        return []
+
+    if lang == "zh":
+        prompt = f"""你是一位罕见病症状提取专家。
+分析以下中文症状描述，拆分为独立的、原子化的医学症状。
+规则：
+1. 将复杂描述拆分为单个症状（例如 "手脚疼痛，身上有红色斑点" → 两个独立症状）。
+2. raw_description 保留用户的中文原话，standard_term 必须输出精确的英文 HPO 术语。
+3. standard_term 优先使用最精确的 HPO 术语名，而非泛化描述。示例：
+   - "皮肤上的深红色斑点" → "Angiokeratoma"（不是 "red spots" 或 "purpura"）
+   - "手脚灼烧感" → "Acroparesthesia"（不是 "burning pain"）
+   - "不出汗" → "Anhidrosis"（不是 "cannot sweat"）
+   - "发烧" → "Fever"
+   - "肚子疼" → "Abdominal pain"
+   - "反复抽搐" → "Seizure"
+   - "肌肉无力" → "Muscle weakness"
+   - "视力模糊" → "Blurred vision"
+4. 只返回 JSON 数组，每个对象含 "raw_description" 和 "standard_term" 两个键。不要用 markdown 包裹。
+
+文本: "{text}"
+"""
+        system_prompt = (
+            "你是一位医学症状提取专家，精通 HPO 本体对齐。"
+            "输出包含 'raw_description'（用户中文原话）和 "
+            "'standard_term'（英文 HPO 术语）的有效 JSON 数组。"
+        )
+    else:
+        prompt = f"""
+You are an expert clinical information extractor.
+Analyze the following user text and extract the distinct medical signs and symptoms.
+Rules:
+1. Break down complex descriptions into individual, atomic symptoms.
+2. MUST explicitly include the anatomical location (e.g., instead of "dark spots", output "dark spots on abdominal skin").
+3. For 'standard_term', output the EXACT HPO (Human Phenotype Ontology) term name whenever possible — not a general clinical description. Examples: "dark red spots on skin" → "Angiokeratoma" (not "purpura" or "red spots"); "burning pain in hands and feet" → "Acroparesthesia" (not "burning paresthesia"); "cannot sweat" → "Anhidrosis" (not "absence of sweating"). Use the most specific HPO term available. Prefer Latin/Greek medical nomenclature over descriptive phrases.
+4. Return ONLY a valid JSON array of objects, each with keys "raw_description" and "standard_term". No markdown blocks.
+
+Text: "{text}"
+"""
+        system_prompt = (
+            "You are a medical JSON extractor specializing in HPO ontology alignment. "
+            "Output a valid JSON array of objects with 'raw_description' (user's words) "
+            "and 'standard_term' (HPO-aligned medical vocabulary) keys only."
+        )
+
+    try:
+        response = deepseek_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,
+        )
+
+        result_text = response.choices[0].message.content.strip()
+
+        # Clean possible markdown wrapping
+        if result_text.startswith("```"):
+            lines = result_text.split("\n")
+            result_text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+
+        fragments = json.loads(result_text)
+        if not isinstance(fragments, list):
+            return [{"raw": text, "standard": text}]
+
+        # Build structured fragments
+        structured: List[Dict[str, str]] = []
+        for item in fragments:
+            if isinstance(item, dict):
+                raw = item.get("raw_description", "").strip().lower()
+                std = item.get("standard_term", "").strip().lower()
+                if raw and std:
+                    structured.append({"raw": raw, "standard": std})
+                elif raw:
+                    structured.append({"raw": raw, "standard": raw})
+                elif std:
+                    structured.append({"raw": std, "standard": std})
+            elif isinstance(item, str):
+                s = item.strip().lower()
+                if s:
+                    structured.append({"raw": s, "standard": s})
+
+        return structured or [{"raw": text, "standard": text}]
+
+    except Exception as e:
+        print(f"DeepSeek API extraction failed: {e} — falling back to regex split")
         import re
-        return [p.strip() for p in re.split(
+        splits = [p.strip() for p in re.split(
             r'[,;.，；。、\n]+|\band\b|\balso\b|和|还有|以及|\n',
             text, flags=re.IGNORECASE
         ) if len(p.strip()) >= 3]
+        return [{"raw": s, "standard": s} for s in splits] or [{"raw": text, "standard": text}]
 
-    # 1. Pre-split by top-level conjunctions to isolate independent symptom clauses
-    import re
-    sub_sentences = [s.strip() for s in re.split(
-        r'\band\b|\balso\b|,\s*(?!\d)|;\s*',
-        text, flags=re.IGNORECASE
-    ) if len(s.strip()) >= 3]
 
-    if len(sub_sentences) == 1 and len(sub_sentences[0]) < 5:
-        # Very short input — use as-is
-        return [sub_sentences[0]]
+def get_api_embedding(text: str) -> np.ndarray:
+    """Call cloud Embedding API and return FAISS-compatible numpy array.
 
-    # 2. For each sub-sentence, extract entities + noun chunks
-    cleaned: List[str] = []
-    seen_clean: Set[str] = set()
-    pronoun_filter = {'i', 'me', 'my', 'we', 'us', 'he', 'she', 'it', 'they', 'you'}
+    Uses SiliconFlow's BAAI/bge-m3 (1024-dim). Returns shape (1, 1024) float32.
 
-    for sub in sub_sentences:
-        doc = nlp(sub)
+    Expects a PURE medical standard_term (from DeepSeek extraction), NOT the
+    user's raw layperson description. The caller (smart_search) is responsible
+    for decoupling: raw_description for UI display, standard_term for embedding.
 
-        # Collect candidates: entities first (biomedical terms), then noun chunks
-        candidates: List[str] = []
-        seen: Set[str] = set()
+    Adds an instruction prefix for asymmetric retrieval — signals the model
+    to encode this as a search query targeting the HPO ontology index.
+    The FAISS index (built by build_vector_index.py) is embedded WITHOUT
+    any prefix, creating the query/document asymmetry that BGE models excel at.
+    """
+    instruction = (
+        "Represent this medical symptom for retrieving relevant "
+        "rare disease phenotype terms from a standard ontology: "
+    )
+    query_text = f"{instruction}{text}"
 
-        for ent in doc.ents:
-            t = ent.text.strip().lower()
-            if len(t) >= 2 and t not in seen and t not in pronoun_filter:
-                seen.add(t)
-                candidates.append(ent.text.strip())
+    try:
+        response = embedding_client.embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=query_text,
+        )
+        vec = response.data[0].embedding
+        return np.array([vec], dtype=np.float32)
+    except Exception as e:
+        print(f"Embedding API request failed: {e}")
+        raise ValueError("Failed to fetch embedding from API")
 
-        for chunk in doc.noun_chunks:
-            t = chunk.text.strip().lower()
-            if len(t) >= 3 and t not in seen and t not in pronoun_filter:
-                seen.add(t)
-                candidates.append(chunk.text.strip())
 
-        # 3. Clean each candidate: strip leading determiners/pronouns
-        for c in candidates:
-            clean = c.lower()
-            for prefix in ('a ', 'an ', 'the ', 'my ', 'his ', 'her ',
-                           'their ', 'our ', 'some ', 'any ', 'i have ',
-                           'i have a ', 'i feel ', 'i am ', 'i\'m '):
-                if clean.startswith(prefix):
-                    clean = clean[len(prefix):]
-                    break
-            clean = clean.strip()
-            if len(clean) >= 2 and clean not in seen_clean and clean not in pronoun_filter:
-                seen_clean.add(clean)
-                cleaned.append(clean)
+def llm_rerank_candidates(
+    raw_description: str,
+    candidates: List[Dict[str, str]],
+    full_text: str = "",
+) -> Optional[str]:
+    """DeepSeek reranks a unified candidate pool (keyword + FAISS results).
 
-    if not cleaned:
-        return [text.strip()]
+    All candidates — whether from keyword search or FAISS vector recall —
+    go into the same pool. DeepSeek reads the patient's original words
+    AND the full clinical narrative for context, then selects the single
+    best HPO match or rejects all (returns None).
 
-    # 4. Post-process: remove substrings (keep longer version),
-    #    and filter bare adjectives (e.g. "severe" alone is not a symptom)
-    cleaned.sort(key=len, reverse=True)  # longest first for substring dedup
-    final: List[str] = []
-    for c in cleaned:
-        # Check if this fragment is already covered by a longer one
-        if any(c in other and c != other for other in final):
-            continue
-        final.append(c)
+    The full_text parameter gives the model the patient's complete
+    description (e.g. "burning pain in hands, dark red spots, cannot sweat"),
+    so it can disambiguate: "dark red spots" + "cannot sweat" → Angiokeratoma
+    (Fabry disease), not Purpura (generic bleeding).
 
-    return final
+    Args:
+        raw_description: single extracted symptom fragment
+        candidates: merged keyword + FAISS candidates
+        full_text: the patient's complete original narrative
+
+    Returns:
+        selected hpo_id string, or None if no candidate is good enough
+    """
+    if not candidates:
+        return None
+
+    candidates_text = "\n".join(
+        f"- ID: {c['hpo_id']} | Term: {c['name']}" for c in candidates
+    )
+
+    # Build context-aware prompt
+    full_context = (
+        f'The patient\'s full description was: "{full_text}"\n\n'
+        if full_text else ""
+    )
+    prompt = f"""You are an expert medical ontology matcher.
+The patient reported the following symptom in colloquial language:
+"{raw_description}"
+
+{full_context}Below are the candidate medical terms retrieved from the Human Phenotype Ontology (HPO):
+{candidates_text}
+
+TASK:
+Select the SINGLE candidate that best represents the patient's symptom.
+Use the full clinical context to disambiguate — if the patient has multiple
+symptoms that together point to a specific disease, prefer the candidate
+that fits the overall clinical picture.
+If none of the candidates accurately match the symptom, you MUST reject them all.
+
+Output ONLY a valid JSON object with this exact structure:
+{{"selected_id": "HPO_ID_HERE"}} OR {{"selected_id": null}} if no match is good enough.
+"""
+
+    try:
+        response = deepseek_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=[
+                {"role": "system", "content": "You are a strict clinical JSON reranker. Output JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.0,
+        )
+
+        result_text = response.choices[0].message.content.strip()
+
+        # Clean markdown wrapping
+        if result_text.startswith("```"):
+            lines = result_text.split("\n")
+            result_text = "\n".join(
+                lines[1:-1] if lines[-1].strip() == "```" else lines[1:]
+            )
+
+        data = json.loads(result_text)
+        return data.get("selected_id")
+
+    except Exception as e:
+        print(f"DeepSeek rerank failed: {e}")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -800,22 +1221,22 @@ def extract_symptom_fragments(text: str) -> List[str]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load knowledge graph, NLP model, and FAISS index on startup.
-    
-    When running via python3 main.py, models are pre-loaded by _load_all_models()
-    before uvicorn starts. This lifespan handles the python3 -m uvicorn main:app
-    case where models must be loaded inside the ASGI lifecycle.
+    """Load knowledge graph and FAISS index on startup.
+
+    All NLP/embedding is now cloud-based (DeepSeek + SiliconFlow),
+    so no local models need to be loaded. Server starts instantly.
     """
-    global graph, vector_model, vector_index, vector_mapping
+    global graph, vector_index, vector_mapping
 
     # Skip if already loaded (e.g. by _load_all_models in __main__)
     if graph is not None:
-        print("   ℹ  Models pre-loaded — skipping lifespan load\n")
+        print("   ℹ  Graph pre-loaded — skipping lifespan load\n")
         yield
         return
 
     print("\n" + "=" * 60)
-    print(" 🧬  Explainable Rare Disease Clue Finder — Starting up")
+    print(" 🧬  Rare Disease Pre-diagnosis Clue Finder — Starting up")
+    print("     NLP: DeepSeek API  |  Embeddings: SiliconFlow (BAAI/bge-m3)")
     print("=" * 60)
 
     # 1. Load knowledge graph
@@ -824,51 +1245,29 @@ async def lifespan(app: FastAPI):
         graph.load_all()
         stats = graph.stats()
         print(f"\n✅  Graph ready: {stats['total_nodes']:,} nodes, "
-              f"{stats['total_edges']:,} edges")
+              f"{stats['total_edges']:,} edges", flush=True)
     except Exception as exc:
         print(f"❌  Fatal (graph): {exc}", file=sys.stderr)
         sys.exit(1)
 
-    # 2. Load NLP model for semantic search
-    #    Prefer offline (HF_HUB_OFFLINE=1) — works when model is pre-cached.
-    #    If unavailable and HF_ENDPOINT is set (e.g. hf-mirror.com for China),
-    #    fall back to online mode via the mirror.
-    try:
-        print(f"🧠 Loading NLP model: {VECTOR_MODEL_NAME} (offline mode) ...")
-        os.environ.setdefault("HF_HUB_OFFLINE", "1")
-        vector_model = SentenceTransformer(VECTOR_MODEL_NAME, local_files_only=True)
-        print(f"   ✓  Model loaded (dim={vector_model.get_sentence_embedding_dimension()})")
-    except Exception as exc:
-        # If offline fails, try with HF mirror (unset HF_HUB_OFFLINE)
-        if os.environ.get("HF_ENDPOINT"):
-            try:
-                print(f"   ↳ offline failed, trying via {os.environ['HF_ENDPOINT']} ...")
-                os.environ.pop("HF_HUB_OFFLINE", None)
-                vector_model = SentenceTransformer(VECTOR_MODEL_NAME, local_files_only=False)
-                print(f"   ✓  Model loaded (dim={vector_model.get_sentence_embedding_dimension()})")
-            except Exception as exc2:
-                print(f"   ⚠  Model unavailable: {exc2}  — semantic search disabled")
-        else:
-            print(f"   ⚠  Model unavailable: {exc}  — semantic search disabled")
-            print(f"   💡 Fix: HF_ENDPOINT=https://hf-mirror.com python3 -c \\\"")
-            print(f"      from sentence_transformers import SentenceTransformer")
-            print(f"      SentenceTransformer('all-MiniLM-L6-v2')\\\"")
-
-    # 3. Load FAISS index
+    # 2. Load FAISS index (must be built with API-based embeddings, 1024-dim)
     try:
         if os.path.isfile(FAISS_INDEX_PATH) and os.path.isfile(FAISS_MAPPING_PATH):
             vector_index = faiss.read_index(FAISS_INDEX_PATH)
             with open(FAISS_MAPPING_PATH, "rb") as f:
                 vector_mapping = pickle.load(f)
-            print(f"   ✓  FAISS index loaded ({vector_index.ntotal:,} vectors)")
+            print(f"   ✓  FAISS index loaded ({vector_index.ntotal:,} vectors, "
+                  f"dim={vector_index.d})")
+            if vector_index.d != EMBEDDING_DIM:
+                print(f"   ⚠  FAISS index dim mismatch: index={vector_index.d}, "
+                      f"expected={EMBEDDING_DIM}. Rebuild with "
+                      f"build_vector_index.py")
         else:
             print(f"   ⚠  FAISS index not found — run build_vector_index.py first")
     except Exception as exc:
         print(f"   ⚠  FAISS index load failed: {exc}")
 
-    print("=" * 60 + "\n")
-
-    # 4. Load layperson dictionary (optional — graceful fallback)
+    # 3. Load layperson dictionary (optional — graceful fallback)
     try:
         if os.path.isfile(LAYERSON_DICT_PATH):
             with open(LAYERSON_DICT_PATH, encoding="utf-8") as f:
@@ -880,16 +1279,44 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f"   ⚠  Layperson dict load failed: {exc}  — public mode uses original names")
 
-    # 5. Load SciSpacy biomedical NLP model for intelligent segmentation
+    # 3b. Load Chinese layperson dictionary (optional)
     try:
-        if spacy is None:
-            raise ImportError("spacy not installed")
-        print("🧪 Loading SciSpacy model: en_core_sci_sm ...")
-        nlp = spacy.load("en_core_sci_sm", disable=["lemmatizer"])
-        print(f"   ✓  SciSpacy model loaded (pipeline: {nlp.pipe_names})")
+        if os.path.isfile(LAYERSON_DICT_ZH_PATH):
+            with open(LAYERSON_DICT_ZH_PATH, encoding="utf-8") as f:
+                layperson_dict_zh.update(json.load(f))
+            uniq_zh = len(set(layperson_dict_zh.values()))
+            print(f"   ✓  中文通俗字典加载 ({len(layperson_dict_zh):,} 条, {uniq_zh:,} 唯一值)")
+            if uniq_zh < len(layperson_dict_zh):
+                print(f"      ⚠  {len(layperson_dict_zh) - uniq_zh} 个重复 — 运行 build_layperson_dict_zh.py --resolve-only")
+        else:
+            print("   ⚠  layperson_dict_zh.json 未找到 — 中文模式将退化到英文")
+            print("      运行 build_layperson_dict_zh.py 生成中文翻译")
     except Exception as exc:
-        nlp = None
-        print(f"   ⚠  SciSpacy unavailable: {exc}  — falling back to regex split")
+        print(f"   ⚠  中文通俗字典加载失败: {exc}")
+
+    # 3c. Load Chinese HPO names (optional)
+    try:
+        if os.path.isfile(HPO_NAMES_ZH_PATH):
+            with open(HPO_NAMES_ZH_PATH, encoding="utf-8") as f:
+                hpo_names_zh.update(json.load(f))
+            print(f"   ✓  中文专业术语加载 ({len(hpo_names_zh):,} 条)")
+        else:
+            print("   ⚠  hpo_names_zh.json 未找到 — 中文专家模式将显示英文名")
+            print("      运行 build_layperson_dict_zh.py --mode medical 生成")
+    except Exception as exc:
+        print(f"   ⚠  中文专业术语加载失败: {exc}")
+
+    # 3d. Load Chinese disease names (optional)
+    try:
+        if os.path.isfile(DISEASE_DICT_ZH_PATH):
+            with open(DISEASE_DICT_ZH_PATH, encoding="utf-8") as f:
+                disease_dict_zh.update(json.load(f))
+            print(f"   ✓  中文疾病名加载 ({len(disease_dict_zh):,} 条)")
+        else:
+            print("   ⚠  disease_names_zh.json 未找到 — 中文模式将显示英文疾病名")
+            print("      运行 build_disease_dict_zh.py 生成中文翻译")
+    except Exception as exc:
+        print(f"   ⚠  中文疾病名加载失败: {exc}")
 
     print("=" * 60 + "\n")
     yield  # application runs here
@@ -901,13 +1328,13 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Explainable Rare Disease Clue Finder",
+    title="Rare Disease Pre-diagnosis Clue Finder",
     description="Knowledge Graph API — True Path Rule inference over HPO + Orphanet",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
-# ── CORS (allow frontend dev server) ──
+# ── CORS (allow Vite frontend dev server on :5173) ──
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -916,23 +1343,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve Vite-built JS/CSS from frontend/dist/assets when present.
+_assets_dir = os.path.join(FRONTEND_DIST_DIR, "assets")
+if os.path.isdir(_assets_dir):
+    app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
+def _resolve_frontend_index() -> str:
+    """Serve the React production build."""
+    if os.path.isfile(FRONTEND_INDEX_PATH):
+        return FRONTEND_INDEX_PATH
+    raise HTTPException(
+        status_code=404,
+        detail="Frontend not found. Run `cd frontend && npm run build` first.",
+    )
+
+
 @app.get("/")
 def serve_frontend():
-    """Serve the main frontend HTML page."""
-    index_path = FRONTEND_INDEX_PATH
-    if not os.path.isfile(index_path):
-        raise HTTPException(status_code=404, detail="index.html not found")
-    return FileResponse(index_path, media_type="text/html",
-                        headers={
-                            "Cache-Control": "no-cache, no-store, must-revalidate",
-                            "Pragma": "no-cache",
-                            "Expires": "0",
-                        })
+    """Serve the patient-facing React SPA."""
+    return FileResponse(
+        _resolve_frontend_index(),
+        media_type="text/html",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/api/health", response_model=HealthResponse)
@@ -944,7 +1386,8 @@ def health_check():
 
 
 @app.post("/api/predict", response_model=PredictResponse)
-def predict_diseases(req: PredictRequest, mode: str = "expert"):
+def predict_diseases(req: PredictRequest, mode: str = "expert",
+                     lang: str = Query("en", description="Language: 'en' or 'zh'")):
     """Run the True Path Rule inference and return the top-5 diseases.
 
     Each disease prediction includes explainable matched paths so the UI
@@ -956,9 +1399,12 @@ def predict_diseases(req: PredictRequest, mode: str = "expert"):
     Query parameters:
         mode — "expert" (default) for original HPO names,
                "public" for layperson-translated names
+        lang — "en" (default) or "zh" for Chinese translations
     """
     if mode not in ("expert", "public"):
         raise HTTPException(status_code=400, detail="mode must be 'expert' or 'public'")
+    if lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
     if graph is None:
         raise HTTPException(status_code=503, detail="Graph not loaded yet")
     try:
@@ -970,16 +1416,33 @@ def predict_diseases(req: PredictRequest, mode: str = "expert"):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    # --- Translate names for public mode ---
+    # --- Translate names based on mode & language ---
     if mode == "public":
         for s in suggestions:
-            s.name = resolve_name(s.hpo_id, s.name, "public")
+            s.name = resolve_name(s.hpo_id, s.name, "public", lang)
             s.reason = s.reason  # keep reason as-is (refers to disease name)
         for disease in results:
             for path in disease.matched_paths:
-                path.input_hpo_name = resolve_name(path.input_hpo_id, path.input_hpo_name, "public")
-                path.matched_hpo_name = resolve_name(path.matched_hpo_id, path.matched_hpo_name, "public")
+                path.input_hpo_name = resolve_name(path.input_hpo_id, path.input_hpo_name, "public", lang)
+                path.matched_hpo_name = resolve_name(path.matched_hpo_id, path.matched_hpo_name, "public", lang)
                 path.explanation = path.explanation  # keep explanation structure
+            for mh in disease.missing_critical_hpos:
+                mh.name = resolve_name(mh.hpo_id, mh.name, "public", lang)
+    elif lang == "zh":
+        # Expert mode with Chinese: translate HPO names to Chinese medical terms
+        for s in suggestions:
+            s.name = resolve_name(s.hpo_id, s.name, "expert", lang)
+        for disease in results:
+            for path in disease.matched_paths:
+                path.input_hpo_name = resolve_name(path.input_hpo_id, path.input_hpo_name, "expert", lang)
+                path.matched_hpo_name = resolve_name(path.matched_hpo_id, path.matched_hpo_name, "expert", lang)
+            for mh in disease.missing_critical_hpos:
+                mh.name = resolve_name(mh.hpo_id, mh.name, "expert", lang)
+
+    # --- Translate disease names for zh mode ---
+    if lang == "zh":
+        for disease in results:
+            disease.disease_name = resolve_disease_name(disease.disease_id, disease.disease_name, lang)
 
     return PredictResponse(
         query_hpo_ids=req.hpo_ids,
@@ -989,7 +1452,8 @@ def predict_diseases(req: PredictRequest, mode: str = "expert"):
 
 
 @app.get("/api/hpo-search", response_model=HPOSearchResponse)
-def search_hpo(q: str = "", limit: int = 20, mode: str = "expert"):
+def search_hpo(q: str = "", limit: int = 20, mode: str = "expert",
+               lang: str = Query("en", description="Language: 'en' or 'zh'")):
     """Search HPO phenotype terms by name (case-insensitive substring).
 
     Query parameters:
@@ -997,9 +1461,12 @@ def search_hpo(q: str = "", limit: int = 20, mode: str = "expert"):
         limit — max results (default 20, max 50)
         mode  — "expert" (default) for original HPO names,
                 "public" for layperson-translated names
+        lang  — "en" (default) or "zh" for Chinese translations
     """
     if mode not in ("expert", "public"):
         raise HTTPException(status_code=400, detail="mode must be 'expert' or 'public'")
+    if lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
     if graph is None:
         raise HTTPException(status_code=503, detail="Graph not loaded yet")
     q = q.strip()
@@ -1007,11 +1474,29 @@ def search_hpo(q: str = "", limit: int = 20, mode: str = "expert"):
         return HPOSearchResponse(query=q, results=[], total=0)
     limit = max(1, min(limit, 50))
     results = graph.search_hpo(q, limit=limit)
+
+    # --- Chinese name search (when lang=zh and hpo_names_zh available) ---
+    if lang == "zh" and hpo_names_zh:
+        q_lower = q.lower()
+        zh_scored: List[Tuple[int, str, str]] = []
+        seen_ids: Set[str] = {r[0] for r in results}
+        for hpo_id, zh_name in hpo_names_zh.items():
+            if hpo_id in seen_ids:
+                continue
+            idx = zh_name.lower().find(q_lower)
+            if idx != -1:
+                zh_scored.append((idx, hpo_id, zh_name))
+        zh_scored.sort(key=lambda x: (x[0], len(x[2])))
+        for _, hpo_id, zh_name in zh_scored:
+            if len(results) >= limit:
+                break
+            results.append((hpo_id, graph._hpo_id_to_name.get(hpo_id, zh_name)))
+
     return HPOSearchResponse(
         query=q,
         results=[HPOSearchResult(
             id=r[0],
-            name=resolve_name(r[0], r[1], mode)
+            name=resolve_name(r[0], r[1], mode, lang)
         ) for r in results],
         total=len(results),
     )
@@ -1029,7 +1514,8 @@ def anatomy_tree():
 
 
 @app.get("/api/vector-search", response_model=VectorSearchResponse)
-def vector_search(text: str = "", k: int = 5, mode: str = "expert"):
+def vector_search(text: str = "", k: int = 5, mode: str = "expert",
+                  lang: str = Query("en", description="Language: 'en' or 'zh'")):
     """Semantic search over HPO terms using sentence-transformers embeddings.
 
     Encodes free-text layperson descriptions (e.g. "muscle stiffness in legs")
@@ -1040,13 +1526,16 @@ def vector_search(text: str = "", k: int = 5, mode: str = "expert"):
         k    — number of results (default 5, max 10)
         mode — "expert" (default) for original HPO names,
                "public" for layperson-translated names
+        lang — "en" (default) or "zh" for Chinese translations
     """
     if mode not in ("expert", "public"):
         raise HTTPException(status_code=400, detail="mode must be 'expert' or 'public'")
-    if vector_model is None or vector_index is None:
+    if lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
+    if vector_index is None:
         raise HTTPException(
             status_code=503,
-            detail="Vector search not available — model or index not loaded",
+            detail="Vector search not available — FAISS index not loaded",
         )
     text = text.strip()
     if len(text) < 3:
@@ -1054,10 +1543,14 @@ def vector_search(text: str = "", k: int = 5, mode: str = "expert"):
 
     k = max(1, min(k, 10))
 
-    # Encode query with sentence-transformers (L2-normalized → cosine via IP)
-    query_vec = vector_model.encode(
-        [text], normalize_embeddings=True, show_progress_bar=False
-    ).astype(np.float32)
+    # Encode query via cloud Embedding API
+    try:
+        query_vec = get_api_embedding(text)
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Embedding API unavailable: {e}",
+        )
 
     # Search FAISS
     distances, indices = vector_index.search(query_vec, k)
@@ -1071,7 +1564,7 @@ def vector_search(text: str = "", k: int = 5, mode: str = "expert"):
         entry = vector_mapping[idx]
         results.append(VectorSearchResult(
             hpo_id=entry["hpo_id"],
-            name=resolve_name(entry["hpo_id"], entry["name"], mode),
+            name=resolve_name(entry["hpo_id"], entry["name"], mode, lang),
             score=round(float(distances[0][i]), 4),
         ))
 
@@ -1080,49 +1573,53 @@ def vector_search(text: str = "", k: int = 5, mode: str = "expert"):
 
 @app.get("/api/smart-search", response_model=SmartSearchResponse)
 def smart_search(text: str = Query(..., min_length=3, description="Free-text symptom description"),
-                 mode: str = Query("expert", description="Mode: 'expert' or 'public'")):
-    """Phase 8: SciSpacy-powered intelligent segmentation + hybrid search.
+                 mode: str = Query("expert", description="Mode: 'expert' or 'public'"),
+                 lang: str = Query("en", description="Language: 'en' or 'zh'")):
+    """DeepSeek-powered segmentation + decoupled hybrid search.
 
-    Accepts free-text layperson descriptions (e.g. "heavy feeling in legs, trouble walking"),
-    uses SciSpacy biomedical NLP to extract clean symptom fragments, then performs
-    hybrid search (vector + keyword) per fragment with cross-fragment deduplication.
+    Pipeline:
+    1. DeepSeek extracts symptoms → {raw_description, standard_term}
+    2. Vector search uses ONLY standard_term (no semantic dilution from layperson words)
+    3. Keyword search uses standard_term with elevated priority (lexical match > vector)
+    4. UI displays raw_description; embedding/keyword operate on clean medical terms
 
-    Returns grouped results keyed by extracted fragment for the frontend UI.
+    This separation eliminates the "semantic dilution" problem where mixing
+    layperson words (hands, feet, pain) with medical terms drowns out the
+    precise signal needed for HPO ontology matching.
     """
     if mode not in ("expert", "public"):
         raise HTTPException(status_code=400, detail="mode must be 'expert' or 'public'")
+    if lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
     if graph is None:
         raise HTTPException(status_code=503, detail="Graph not loaded yet")
-    if vector_model is None or vector_index is None:
-        missing = []
-        if vector_model is None: missing.append("NLP model (all-MiniLM-L6-v2)")
-        if vector_index is None: missing.append("FAISS index (hpo_index.faiss)")
+    if vector_index is None:
         raise HTTPException(
             status_code=503,
-            detail=f"Smart search unavailable — missing: {', '.join(missing)}. "
-                   f"Run: pip install sentence-transformers faiss-cpu && "
-                   f"python3 -c \\\"from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')\\\" && "
-                   f"python3 build_vector_index.py",
+            detail="Smart search unavailable — FAISS index not loaded. "
+                   "Run: python3 build_vector_index.py",
         )
 
     text = text.strip()
     if len(text) < 3:
         raise HTTPException(status_code=400, detail="Query must be at least 3 characters")
 
-    # 1. SciSpacy segmentation → clean fragments
-    fragments = extract_symptom_fragments(text)
+    # 1. DeepSeek extraction → structured {raw, standard} dicts
+    fragments = extract_symptom_fragments(text, lang)
 
-    # 2. For each fragment, run hybrid search (vector + keyword in parallel)
+    # 2. For each fragment: vector search on standard ONLY, keyword search on standard,
+    #    display label from raw.
     groups: List[SmartSearchGroup] = []
     global_best: Dict[str, Tuple[float, str, float, str]] = {}  # hpo_id → (best_score, name, _kw_flag, hint)
 
-    for fragment in fragments:
-        # 2a. Vector search
+    for frag_dict in fragments:
+        raw_desc = frag_dict["raw"]       # for UI display
+        std_term = frag_dict["standard"]   # for embedding + keyword search
+
+        # 2a. Vector search — use PURE standard term (no raw_description pollution)
         vec_results: List[VectorSearchResult] = []
         try:
-            query_vec = vector_model.encode(
-                [fragment], normalize_embeddings=True, show_progress_bar=False
-            ).astype(np.float32)
+            query_vec = get_api_embedding(std_term)
             distances, indices = vector_index.search(query_vec, 6)
             for i in range(min(6, len(indices[0]))):
                 idx = int(indices[0][i])
@@ -1132,19 +1629,20 @@ def smart_search(text: str = Query(..., min_length=3, description="Free-text sym
                 score = round(float(distances[0][i]), 4)
                 vec_results.append(VectorSearchResult(
                     hpo_id=entry["hpo_id"],
-                    name=resolve_name(entry["hpo_id"], entry["name"], mode),
+                    name=resolve_name(entry["hpo_id"], entry["name"], mode, lang),
                     score=score,
                     hint=resolve_parent_hint(entry["hpo_id"]) if mode == "public" else "",
                 ))
         except Exception:
             pass  # vector search failed for this fragment — skip
 
-        # 2b. Keyword search
+        # 2b. Keyword search — use standard term, ELEVATED priority
+        #     Lexical match on precise medical vocabulary always beats vector similarity.
         kw_results: List[VectorSearchResult] = []
-        is_bio = is_biomarker_fragment(fragment)
-        kw_base_score = 1.5 if is_bio else 1.0  # Phase 10: boost biomarker keywords
+        is_bio = is_biomarker_fragment(std_term)
+        kw_score = 2.0 if is_bio else 1.5  # always above vector scores (0.4-1.0)
         try:
-            hpo_matches = graph.search_hpo(fragment, limit=6)
+            hpo_matches = graph.search_hpo(std_term, limit=6)
             for hpo_id, name in hpo_matches:
                 hint = ""
                 if mode == "public" and is_bio:
@@ -1153,14 +1651,14 @@ def smart_search(text: str = Query(..., min_length=3, description="Free-text sym
                     hint = resolve_parent_hint(hpo_id)
                 kw_results.append(VectorSearchResult(
                     hpo_id=hpo_id,
-                    name=resolve_name(hpo_id, name, mode),
-                    score=kw_base_score,
+                    name=resolve_name(hpo_id, name, mode, lang),
+                    score=kw_score,
                     hint=hint,
                 ))
         except Exception:
             pass
 
-        # 2c. Merge: keyword first, then vector (dedup within fragment)
+        # 2c. Merge: keyword first (always wins), then vector (dedup within fragment)
         seen_frag: Set[str] = set()
         merged: List[VectorSearchResult] = []
         for r in kw_results:
@@ -1176,10 +1674,10 @@ def smart_search(text: str = Query(..., min_length=3, description="Free-text sym
         for r in merged:
             current = global_best.get(r.hpo_id)
             if current is None or r.score > current[0]:
-                global_best[r.hpo_id] = (r.score, r.name, 1.0 if r.score >= kw_base_score else 0.0, r.hint)
+                global_best[r.hpo_id] = (r.score, r.name, 1.0 if r.score >= kw_score else 0.0, r.hint)
 
         groups.append(SmartSearchGroup(
-            fragment=fragment,
+            fragment=raw_desc,  # display the user's original words
             results=merged[:5],
         ))
 
@@ -1205,9 +1703,470 @@ def smart_search(text: str = Query(..., min_length=3, description="Free-text sym
 
     return SmartSearchResponse(
         query=text,
-        fragments=fragments,
+        fragments=[f["raw"] for f in fragments],
         groups=deduped_groups,
     )
+
+
+# ── Per-fragment processing for auto_diagnose (parallel-safe) ────────────
+def _process_one_fragment(
+    frag_dict: Dict[str, str],
+    full_text: str,
+) -> Dict[str, Any]:
+    """Process one symptom fragment: keyword + FAISS + DeepSeek rerank.
+
+    Returns a dict with all the data needed to build AutoSelection + SymptomLog.
+    This function is designed to be called from a ThreadPoolExecutor.
+    """
+    raw_desc = frag_dict["raw"]
+    std_term = frag_dict["standard"]
+
+    matched_hpo_id: Optional[str] = None
+    matched_hpo_name: Optional[str] = None
+    match_method: str = ""
+
+    kw_candidates: List[Dict[str, str]] = []
+    faiss_candidates: List[Dict[str, Any]] = []
+    reranker_selection: Optional[str] = None
+    reranker_rejected: bool = False
+
+    candidates_for_llm: List[Dict[str, str]] = []
+    seen_cand_ids: Set[str] = set()
+
+    # a. Keyword candidates (fast, in-memory)
+    try:
+        kw_hits = graph.search_hpo(std_term, limit=5)
+        for hpo_id, name in kw_hits:
+            kw_candidates.append({"hpo_id": hpo_id, "name": name})
+            if hpo_id not in seen_cand_ids:
+                candidates_for_llm.append({"hpo_id": hpo_id, "name": name})
+                seen_cand_ids.add(hpo_id)
+    except Exception:
+        pass
+
+    # b. FAISS vector candidates
+    if vector_index is not None:
+        try:
+            query_vec = get_api_embedding(std_term)
+            distances, indices = vector_index.search(query_vec, 20)
+            for i in range(min(20, len(indices[0]))):
+                idx = int(indices[0][i])
+                if idx < 0 or idx >= len(vector_mapping):
+                    continue
+                entry = vector_mapping[idx]
+                score = float(distances[0][i])
+                hpo_id = entry["hpo_id"]
+                faiss_candidates.append({"hpo_id": hpo_id, "name": entry["name"], "score": round(score, 4)})
+                if hpo_id not in seen_cand_ids:
+                    candidates_for_llm.append({"hpo_id": hpo_id, "name": entry["name"]})
+                    seen_cand_ids.add(hpo_id)
+        except Exception:
+            pass
+
+    # c. DeepSeek rerank
+    if candidates_for_llm:
+        try:
+            best_id = llm_rerank_candidates(raw_desc, candidates_for_llm, full_text=full_text)
+            if best_id:
+                reranker_selection = best_id
+                best_candidate = next(
+                    (c for c in candidates_for_llm if c["hpo_id"] == best_id),
+                    None,
+                )
+                if best_candidate:
+                    matched_hpo_id = best_id
+                    matched_hpo_name = best_candidate["name"]
+                    match_method = "llm_rerank"
+                else:
+                    reranker_rejected = False
+            else:
+                reranker_rejected = True
+        except Exception:
+            # DeepSeek API failed → keyword fallback
+            if kw_candidates:
+                best_kw = kw_candidates[0]
+                matched_hpo_id = best_kw["hpo_id"]
+                matched_hpo_name = best_kw["name"]
+                match_method = "keyword_fallback"
+
+    return {
+        "raw_desc": raw_desc,
+        "std_term": std_term,
+        "matched_hpo_id": matched_hpo_id,
+        "matched_hpo_name": matched_hpo_name,
+        "match_method": match_method,
+        "kw_candidates": kw_candidates,
+        "faiss_candidates": faiss_candidates,
+        "reranker_selection": reranker_selection,
+        "reranker_rejected": reranker_rejected,
+    }
+
+
+@app.get("/api/auto-diagnose", response_model=PredictResponse)
+def auto_diagnose(
+    text: str = Query(..., min_length=3, description="Free-text symptom description"),
+    mode: str = Query("public", description="Mode: 'expert' or 'public' (default: public)"),
+    lang: str = Query("en", description="Language: 'en' or 'zh'"),
+):
+    """Public-mode zero-click diagnosis: free-text in, disease predictions out.
+
+    Designed for non-expert users who cannot be expected to search and select
+    HPO terms manually. The full pipeline runs automatically:
+
+    1. DeepSeek extracts symptoms → {raw_description, standard_term}
+    2. For each standard_term: keyword search first (lexical HPO match),
+       vector search as fallback
+    3. Auto-selects the best HPO per symptom, deduplicates
+    4. Runs True Path Rule inference on the combined HPO set
+    5. Returns top-5 diseases with matched paths + selection trace
+
+    The response includes `auto_selections` so the user can see exactly
+    which of their words mapped to which medical terms.
+    """
+    if mode not in ("expert", "public"):
+        raise HTTPException(status_code=400, detail="mode must be 'expert' or 'public'")
+    if lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
+    if graph is None:
+        raise HTTPException(status_code=503, detail="Graph not loaded yet")
+
+    text = text.strip()
+    if len(text) < 3:
+        raise HTTPException(status_code=400, detail="Query must be at least 3 characters")
+
+    # 1. Extract structured symptoms via DeepSeek
+    fragments = extract_symptom_fragments(text, lang)
+    if not fragments:
+        raise HTTPException(status_code=400, detail="No symptoms could be extracted from the text")
+
+    # 2. Auto-select HPOs: parallel processing per fragment
+    selected_hpos: List[Tuple[str, str]] = []
+    auto_selections: List[AutoSelection] = []
+    symptom_logs: List[SymptomLog] = []
+    seen_hpo_ids: Set[str] = set()
+
+    # Process all fragments in parallel (FAISS + reranker are I/O-bound API calls)
+    fragment_results: List[Dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=min(8, len(fragments))) as executor:
+        futures = {
+            executor.submit(_process_one_fragment, fd, text): i
+            for i, fd in enumerate(fragments)
+        }
+        # Collect results in original order
+        fragment_results = [None] * len(fragments)
+        for future in as_completed(futures):
+            idx = futures[future]
+            try:
+                fragment_results[idx] = future.result()
+            except Exception:
+                fragment_results[idx] = None
+
+    for result in fragment_results:
+        if result is None:
+            continue
+        raw_desc = result["raw_desc"]
+        std_term = result["std_term"]
+        matched_hpo_id = result["matched_hpo_id"]
+        matched_hpo_name = result["matched_hpo_name"]
+        match_method = result["match_method"]
+
+        # Deduplicate: skip if this HPO was already selected for another fragment
+        if matched_hpo_id and matched_hpo_id in seen_hpo_ids:
+            matched_hpo_id = None
+            matched_hpo_name = None
+            match_method = "none"
+
+        # Record the selection
+        if matched_hpo_id:
+            seen_hpo_ids.add(matched_hpo_id)
+            selected_hpos.append((matched_hpo_id, matched_hpo_name))
+            auto_selections.append(AutoSelection(
+                raw_description=raw_desc,
+                standard_term=std_term,
+                matched_hpo_id=matched_hpo_id,
+                matched_hpo_name=resolve_name(matched_hpo_id, matched_hpo_name, mode, lang),
+                match_method=match_method,
+            ))
+        else:
+            auto_selections.append(AutoSelection(
+                raw_description=raw_desc,
+                standard_term=std_term,
+                matched_hpo_id="",
+                matched_hpo_name="(no match found)",
+                match_method="none",
+            ))
+
+        # Computation log for this symptom
+        symptom_logs.append(SymptomLog(
+            raw_description=raw_desc,
+            standard_term=std_term,
+            keyword_candidates=result["kw_candidates"],
+            faiss_candidates=result["faiss_candidates"],
+            reranker_selection=result.get("reranker_selection"),
+            reranker_rejected=result.get("reranker_rejected", False),
+            selected_hpo_id=matched_hpo_id or "",
+            selected_hpo_name=matched_hpo_name or "",
+            match_method=match_method,
+        ))
+
+    # 3. Must have at least one valid HPO to predict
+    if not selected_hpos:
+        return PredictResponse(
+            query_hpo_ids=[],
+            results=[],
+            suggested_hpos=[],
+            auto_selections=auto_selections,
+        )
+
+    # 4. Run True Path Rule inference
+    hpo_ids = [hpo_id for hpo_id, _ in selected_hpos]
+    try:
+        results = graph.predict(hpo_ids)
+        top_disease_ids = [r.disease_id for r in results]
+        suggestions = graph.suggest_next_hpos(top_disease_ids, set(hpo_ids))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    # 4b. Build inference computation log
+    total_diseases = max(1, len(graph._disease_id_to_name))
+    disease_score_logs: List[DiseaseScoreLog] = []
+    for disease in results:
+        contrib_logs: List[ContributionLog] = []
+        for path in disease.matched_paths:
+            df = len(graph._hpo_to_diseases.get(path.matched_hpo_id, []))
+            raw_idf = math.log(total_diseases / (df + 1))
+            idf = 1.0 + math.sqrt(raw_idf)
+            contrib_logs.append(ContributionLog(
+                hpo_id=path.matched_hpo_id,
+                hpo_name=path.matched_hpo_name,
+                match_type=path.match_type,
+                frequency_weight=path.frequency_weight,
+                multiplier=path.score_multiplier,
+                idf_weight=round(idf, 4),
+                contribution=path.contribution,
+            ))
+        disease_score_logs.append(DiseaseScoreLog(
+            disease_id=disease.disease_id,
+            disease_name=resolve_disease_name(disease.disease_id, disease.disease_name, lang),
+            total_score=disease.total_score,
+            explained_ratio=disease.explained_ratio,
+            contributions=contrib_logs,
+        ))
+
+    inference_log = InferenceLog(
+        total_diseases=total_diseases,
+        input_hpo_ids=hpo_ids,
+        disease_scores=disease_score_logs,
+    )
+
+    computation_log = ComputationLog(
+        extraction={"input_text": text, "fragments": fragments},
+        symptoms=symptom_logs,
+        inference=inference_log,
+    )
+
+    # 5. Translate names based on mode & language
+    if mode == "public":
+        for s in suggestions:
+            s.name = resolve_name(s.hpo_id, s.name, "public", lang)
+        for disease in results:
+            for path in disease.matched_paths:
+                path.input_hpo_name = resolve_name(path.input_hpo_id, path.input_hpo_name, "public", lang)
+                path.matched_hpo_name = resolve_name(path.matched_hpo_id, path.matched_hpo_name, "public", lang)
+            for mh in disease.missing_critical_hpos:
+                mh.name = resolve_name(mh.hpo_id, mh.name, "public", lang)
+    elif lang == "zh":
+        # Expert mode with Chinese: translate HPO names to Chinese medical terms
+        for s in suggestions:
+            s.name = resolve_name(s.hpo_id, s.name, "expert", lang)
+        for disease in results:
+            for path in disease.matched_paths:
+                path.input_hpo_name = resolve_name(path.input_hpo_id, path.input_hpo_name, "expert", lang)
+                path.matched_hpo_name = resolve_name(path.matched_hpo_id, path.matched_hpo_name, "expert", lang)
+            for mh in disease.missing_critical_hpos:
+                mh.name = resolve_name(mh.hpo_id, mh.name, "expert", lang)
+
+    # --- Translate disease names for zh mode ---
+    if lang == "zh":
+        for disease in results:
+            disease.disease_name = resolve_disease_name(disease.disease_id, disease.disease_name, lang)
+
+    return PredictResponse(
+        query_hpo_ids=hpo_ids,
+        results=results,
+        suggested_hpos=suggestions,
+        auto_selections=auto_selections,
+        computation_log=computation_log,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 15: Missing-symptom layperson descriptions
+# ---------------------------------------------------------------------------
+
+# English prompt template — concise: only describe missing symptoms, no disease intro
+_MISSING_DESC_PROMPT_EN = (
+    "You are a medical translator. Convert the following medical symptom names "
+    "into plain, everyday language that any patient can understand.\n\n"
+    "Symptoms to translate:\n"
+    "{missing_list}\n\n"
+    "Rules:\n"
+    "1. ONLY translate symptoms a patient can notice in daily life (visible, "
+    "felt, experienced) — skin changes, pain, bodily sensations, etc.\n"
+    "2. SKIP lab results, blood tests, enzyme levels, biomarker elevations, "
+    "imaging findings — these cannot be self-perceived. If all are lab markers, "
+    "output a single \"-\".\n"
+    "3. Use everyday words — e.g. \"Angiokeratoma\" → \"small dark red dots "
+    "on the skin (like tiny bumps), more visible after a hot shower\"\n"
+    "4. Do NOT mention the disease name. Do NOT explain the disease. "
+    "Do NOT recap the patient's own symptoms.\n"
+    "5. Output a single sentence, symptoms separated by commas or semicolons. "
+    "No markdown, no labels, no bullet points.\n"
+    "6. Keep it under 50 words."
+)
+
+# Chinese prompt template (uses triple quotes to avoid escaping Chinese quotation marks)
+_MISSING_DESC_PROMPT_ZH = """\
+你是一位医学翻译，把下面的医学术语翻译成通俗大白话，让普通患者能看懂。
+
+需要翻译的症状：
+{missing_list}
+
+要求：
+1. 只翻译患者在生活中能自己察觉到的症状（看得见、摸得着、感觉得到的）——皮肤变化、疼痛、身体感觉等。
+2. 跳过实验室指标、抽血化验结果、酶活性、影像检查发现——这些患者无法自己感知，不要写。
+3. 如果所有症状都是化验指标、没有患者能感知的，输出一个\"-\"。
+4. 用日常词汇——例如：「血管角化瘤」→「皮肤上出现红色或暗红色的小点点（像小疙瘩），洗完热水澡或运动后更明显」
+5. 不要提疾病名称，不要解释这是什么病，不要重复患者已有的症状。
+6. 输出一句连贯的话，用逗号或分号连接。不要 markdown、不要标签、不要编号。
+7. 控制在 60 字以内。\
+"""
+
+
+def _build_batch_describe_prompt(predictions: List[DiseasePredictionSummary], lang: str) -> str:
+    """Build a single batch prompt for translating missing symptoms across all diseases."""
+    tasks = []
+    for p in predictions:
+        if p.missing_hpo_names:
+            items = ", ".join(p.missing_hpo_names)
+            tasks.append(f"ID:{p.disease_id} | {p.disease_name} | [{items}]")
+
+    tasks_joined = "\n".join(tasks)
+
+    if lang == "zh":
+        return f"""你是一位医学翻译，把医学术语翻译成通俗大白话，让普通患者能看懂。
+
+以下是候选疾病缺失的关键症状：
+{tasks_joined}
+
+任务：为每个疾病，把缺失症状翻译成一句连贯的白话描述。
+
+要求：
+1. 只翻译患者在生活中能自己察觉到的症状（看得见、摸得着、感觉得到的）——皮肤变化、疼痛、身体感觉等。
+2. 跳过实验室指标、抽血化验结果、酶活性、影像检查发现——这些患者无法自己感知，跳过即可。如果全部都是化验指标，该疾病输出 "-"。
+3. 不要提疾病名称，不要解释这是什么病，不要重复患者已有的症状。
+4. 一句连贯的话，用逗号或分号连接。控制在 60 字以内。
+
+输出严格的 JSON 对象，键为疾病 ID，值为翻译文本。不要用 markdown 代码块包裹。
+
+示例输出格式：
+{{"ORPHA:324": "皮肤上出现红色小点点，洗完热水澡后更明显", "ORPHA:1652": "眼睛怕光，经常流泪"}}"""
+    else:
+        return f"""You are a medical translator. Convert medical terms into plain, everyday language for patients.
+
+Missing clinical terms per candidate disease:
+{tasks_joined}
+
+TASK: For each disease ID, translate its missing terms into ONE short, fluent sentence.
+
+Rules:
+1. ONLY describe signs a patient can self-perceive (visible, felt, experienced) — skin changes, pain, bodily sensations.
+2. SKIP lab results, blood tests, enzyme levels, biomarker elevations, imaging — if ALL terms are lab markers, output "-".
+3. Do NOT mention or explain the disease itself.
+4. Keep it under 40 words per sentence.
+
+Output a strict JSON object mapping disease_id to translated text. No markdown blocks.
+
+Example output:
+{{"ORPHA:324": "small dark red dots on skin, more visible after a hot shower", "ORPHA:1652": "eyes sensitive to light, frequent tearing"}}"""
+
+
+@app.post("/api/describe-missing", response_model=DescribeMissingResponse)
+def describe_missing_symptoms(req: DescribeMissingRequest):
+    """Generate plain-language descriptions of missing symptoms for top-5 diseases.
+
+    Uses a single batched DeepSeek call (not 5 parallel calls) to avoid
+    rate-limit issues and reduce round-trip latency.
+    """
+    if not req.predictions:
+        return DescribeMissingResponse(descriptions=[])
+    if req.lang not in ("en", "zh"):
+        raise HTTPException(status_code=400, detail="lang must be 'en' or 'zh'")
+
+    predictions = req.predictions[:5]
+
+    # Check if there are any missing symptoms at all
+    has_any_missing = any(p.missing_hpo_names for p in predictions)
+    if not has_any_missing:
+        return DescribeMissingResponse(descriptions=[
+            DiseaseDescription(
+                disease_id=p.disease_id,
+                disease_name=p.disease_name,
+                description="-",
+            ) for p in predictions
+        ])
+
+    # Single batched DeepSeek call
+    prompt = _build_batch_describe_prompt(predictions, req.lang)
+    system_prompt = (
+        "You are a strict clinical JSON translator. "
+        "Output ONLY a valid JSON object, no markdown, no extra text."
+    )
+
+    translated_json: Dict[str, str] = {}
+    try:
+        response = deepseek_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=600,
+        )
+        raw = response.choices[0].message.content.strip()
+        # DeepSeek sometimes wraps JSON in markdown fences or adds trailing noise
+        if raw.startswith("```"):
+            lines = raw.split("\n")
+            raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+        translated_json = json.loads(raw)
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"Batch describe-missing failed: {e}", flush=True)
+        translated_json = {}
+
+    # Assemble results
+    descriptions = []
+    for p in predictions:
+        desc = translated_json.get(p.disease_id, "")
+        desc = desc.strip() if desc else ""
+
+        if desc and desc != "-":
+            # DeepSeek returned a valid perceptible-symptom description
+            pass
+        elif p.missing_hpo_names:
+            # Fallback: no DeepSeek or all-lab → show raw names (better than hidden)
+            sep = "、" if req.lang == "zh" else ", "
+            desc = sep.join(p.missing_hpo_names)
+        else:
+            desc = "-"
+
+        descriptions.append(DiseaseDescription(
+            disease_id=p.disease_id,
+            disease_name=p.disease_name,
+            description=desc,
+        ))
+
+    return DescribeMissingResponse(descriptions=descriptions)
 
 
 # ---------------------------------------------------------------------------
@@ -1218,7 +2177,7 @@ if __name__ == "__main__":
     import uvicorn
     # NOTE: Must use app instance (not "main:app" string) when running as __main__.
     # The string form causes uvicorn to create a second "main" module import,
-    # which means lifespan-loaded globals (vector_model, vector_index) end up
+    # which means lifespan-loaded globals (graph, vector_index) end up
     # in a different module than the one handling requests → 503 on all endpoints.
     # For reload support, run: python3 -m uvicorn main:app --reload
     uvicorn.run(app, host="0.0.0.0", port=8000)

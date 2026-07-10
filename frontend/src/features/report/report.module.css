@@ -1,0 +1,366 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: rd-rise 0.45s var(--ease) both;
+}
+
+.bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin-top: 10px;
+  color: var(--ink);
+}
+.barActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Disclaimer ── */
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--danger-bg);
+  border: 1px solid #e6bcb4;
+  border-radius: var(--r-md);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #6f261b;
+}
+.disclaimerIcon {
+  flex-shrink: 0;
+  color: var(--danger);
+  margin-top: 1px;
+}
+
+/* ── Panel ── */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(18px, 2.5vw, 28px);
+  box-shadow: var(--shadow-sm);
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: var(--ink);
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--brand);
+}
+.sectionNum {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--brand-ink);
+  background: var(--brand);
+  border-radius: var(--r-sm);
+  padding: 3px 7px;
+}
+.sectionDesc {
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+/* ── Symptom table ── */
+.symptoms {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.symptoms th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--brand-ink);
+  background: var(--brand);
+  padding: 9px 14px;
+}
+.symptoms th:first-child {
+  border-top-left-radius: var(--r-sm);
+  width: 44px;
+}
+.symptoms th:last-child {
+  border-top-right-radius: var(--r-sm);
+}
+.symptoms td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hair);
+}
+.symptoms tr:last-child td {
+  border-bottom: none;
+}
+.symIndex {
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+/* ── Clue cards ── */
+.clues {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.clue {
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  animation: rd-rise 0.4s var(--ease) both;
+}
+.clue::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--brand);
+}
+.clueSpot {
+  box-shadow: 0 0 0 2px var(--signal);
+  transition: box-shadow 0.4s var(--ease);
+}
+.clueHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--hair);
+  background: var(--surface);
+}
+.clueHeadLeft {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+.rank {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.rank1 {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.rank2 {
+  background: var(--ink);
+  color: #fff;
+}
+.rank3 {
+  background: var(--signal);
+  color: #fff;
+}
+.rankOther {
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+.clueId {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-mute);
+  margin-bottom: 2px;
+}
+.clueName {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.clueCoverage {
+  min-width: 130px;
+  flex-shrink: 0;
+}
+.clueBody {
+  padding: 15px 18px;
+}
+.evLabel {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-mute);
+  margin-bottom: 10px;
+}
+.evRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--surface-2);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.evRow:last-child {
+  border-bottom: none;
+}
+.evArrow {
+  flex-shrink: 0;
+  color: var(--brand);
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+.evText strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.clueMissing {
+  margin: 0 18px 16px;
+  padding: 11px 14px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--r-md);
+}
+.clueMissingHead {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--warn);
+  margin-bottom: 5px;
+}
+.clueMissingItem {
+  font-size: 0.8rem;
+  color: #5f4409;
+  padding: 2px 0;
+}
+
+.generated {
+  text-align: center;
+  padding: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+}
+
+/* ── Description cards ── */
+.descHead {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--ink-mute);
+  margin-bottom: 12px;
+}
+.descGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.descCard {
+  position: relative;
+  padding: 15px 18px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+  text-align: left;
+  width: 100%;
+  animation: rd-rise 0.35s var(--ease) both;
+}
+.descCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand);
+  box-shadow: var(--shadow-sm);
+}
+.descCardActive {
+  border-color: var(--brand);
+  background: linear-gradient(135deg, var(--brand-tint), var(--surface));
+}
+.descCardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.descRank {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+  flex-shrink: 0;
+}
+.descName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.descText {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.descCheck {
+  position: absolute;
+  top: 13px;
+  right: 15px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--brand);
+  font-size: 0.72rem;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s var(--ease);
+}
+.descCardActive .descCheck {
+  opacity: 1;
+  transform: scale(1);
+}
+.descLoading {
+  text-align: center;
+  padding: 22px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink-mute);
+}
+
+/* ── PDF export tweaks ── */
+.pdfExport .clue,
+.pdfExport .panel {
+  break-inside: avoid;
+}

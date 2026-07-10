@@ -1,4 +1,4 @@
-# iGEM 2026 Rare Disease Clue Finder — deployment dependencies
+# iGEM 2026 Rare Disease Pre-diagnosis Clue Finder — deployment dependencies
 # Install: pip install -r requirements.txt
 
 # Web framework
@@ -10,15 +10,10 @@ networkx>=3.0
 
 # Vector search
 faiss-cpu>=1.7.0
-sentence-transformers>=2.2.0
 numpy>=1.24.0
 
-# Biomedical NLP (Phase 8 — intelligent segmentation)
-spacy>=3.7.0
-scispacy>=0.5.0
+# Cloud API clients (DeepSeek NER + SiliconFlow embeddings)
+openai>=1.0.0
 
 # Layperson dict generation (Phase 9 — standalone script)
 requests>=2.28.0
-
-# ---- scispacy model (install separately after pip) ----
-# pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz

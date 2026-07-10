@@ -1,0 +1,67 @@
+/* ============================================================
+   Design tokens — "Genomic Dossier"
+   A warm, editorial, lab-notebook aesthetic for iGEM 2026.
+   Deep botanical ink on bone paper, clay signal accent,
+   a single bio-lime spark. Distinctive, not generic-medical.
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --paper: #efe9dc;
+  --paper-2: #e7e0d0;
+  --surface: #fbf8f1;
+  --surface-2: #f4efe4;
+  --card: #fffdf8;
+
+  /* Ink */
+  --ink: #16211c;
+  --ink-soft: #3a4640;
+  --ink-mute: #6f7a70;
+  --ink-faint: #9aa39a;
+
+  /* Brand — deep botanical green */
+  --brand: #0f5138;
+  --brand-2: #0a3d2a;
+  --brand-ink: #e9f5ec;
+  --brand-tint: #e4efe6;
+  --brand-line: #c9ddce;
+
+  /* Signal — clay / terracotta (CTA, highlights) */
+  --signal: #c65a34;
+  --signal-2: #a7461f;
+  --signal-tint: #f7e7de;
+
+  /* Spark — bio-lime (tiny accents only) */
+  --spark: #b8d92e;
+  --spark-deep: #8aa50f;
+
+  /* Semantic */
+  --ok: #1f7a4d;
+  --warn: #b26a00;
+  --warn-bg: #f6ead0;
+  --warn-line: #e2c082;
+  --danger: #a33327;
+  --danger-bg: #f7e3df;
+
+  /* Lines & shadow */
+  --line: #d9d0bd;
+  --line-2: #cfc5af;
+  --hair: #e6ddca;
+  --shadow-sm: 0 1px 2px rgba(22, 33, 28, 0.06);
+  --shadow-md: 0 14px 34px -18px rgba(22, 33, 28, 0.35), 0 2px 8px rgba(22, 33, 28, 0.05);
+  --shadow-lg: 0 30px 60px -28px rgba(22, 33, 28, 0.45);
+
+  /* Type */
+  --font-display: "Fraunces", Georgia, "Songti SC", serif;
+  --font-body: "Inter", system-ui, -apple-system, "PingFang SC", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
