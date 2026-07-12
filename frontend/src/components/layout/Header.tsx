@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useI18n } from "../../i18n/i18n";
 import { Helix } from "../graphics/Helix";
 import { Mark } from "../graphics/Mark";
@@ -11,7 +12,7 @@ export function Header() {
       <div className={styles.headerGrain} aria-hidden />
       <Helix className={styles.helix} />
       <div className={styles.headerInner}>
-        <div className={styles.brandRow}>
+        <Link to="/" className={styles.brandRow} style={{ textDecoration: "none", color: "inherit" }}>
           <div className={styles.mark}>
             <Mark />
           </div>
@@ -19,7 +20,7 @@ export function Header() {
             <h1 className={styles.title}>{t("brand_name")}</h1>
             <p className={styles.tagline}>{t("brand_tagline")}</p>
           </div>
-        </div>
+        </Link>
         <div className={styles.headerRight}>
           <span className={styles.kickerBadge}>{t("brand_kicker")}</span>
           <LangToggle />

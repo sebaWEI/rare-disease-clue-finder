@@ -1,0 +1,398 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: rd-rise 0.45s var(--ease) both;
+}
+
+.backRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.backLink:hover {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.hero {
+  background: linear-gradient(180deg, var(--card) 0%, var(--surface) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(22px, 3vw, 36px);
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 4px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, var(--brand), var(--spark));
+}
+
+.diseaseId {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  margin-top: 10px;
+}
+.namePrimary {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.55rem, 3.2vw, 2.2rem);
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 8px 0 6px;
+}
+.nameSecondary {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.summary {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+  max-width: 62ch;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(18px, 2.5vw, 28px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.sectionDesc {
+  font-size: 0.84rem;
+  color: var(--ink-mute);
+  margin-bottom: 16px;
+  line-height: 1.55;
+}
+
+.tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tip {
+  display: flex;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.tipMark {
+  flex-shrink: 0;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: var(--brand-soft, rgba(15, 81, 56, 0.12));
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.keyword {
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.geoBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.geoField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+.geoLabel {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+}
+.geoSelect {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  color: var(--ink);
+  min-width: 180px;
+}
+.geoHint {
+  font-size: 0.78rem;
+  color: var(--ink-mute);
+  flex: 1;
+  min-width: 200px;
+  line-height: 1.45;
+}
+.geoStatus {
+  font-size: 0.8rem;
+  color: var(--brand);
+}
+
+.placeholder {
+  padding: 18px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.orphanLink {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  background: var(--surface);
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 14px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--brand) 35%, var(--line));
+  box-shadow: var(--shadow-sm);
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--card);
+  object-fit: contain;
+  padding: 4px;
+}
+.logoFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-sm);
+  border: 1px dashed var(--line-2);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+}
+
+.cardMain {
+  min-width: 0;
+}
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.expertName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.typeBadge {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  color: var(--ink-mute);
+  background: var(--card);
+}
+.hospitalRow {
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.distance {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--brand);
+  margin-left: 8px;
+}
+.advantage {
+  font-size: 0.82rem;
+  color: var(--ink-mute);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.bio {
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.bioCollapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bioToggle {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.78rem;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mapLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.mapLink {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.mapLink:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.detailHeroRow {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.detailLogo,
+.detailLogoFallback {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--card);
+  object-fit: contain;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.detailLogoFallback {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  border-style: dashed;
+}
+
+.detailHeroText {
+  min-width: 0;
+  flex: 1;
+}
+
+.detailHeroText .namePrimary {
+  font-size: clamp(1.35rem, 2.8vw, 1.85rem);
+  margin: 0;
+}
+
+.loading,
+.error {
+  padding: 28px;
+  text-align: center;
+  color: var(--ink-mute);
+  font-size: 0.95rem;
+}
+.error {
+  color: var(--danger);
+}
+
+@media (max-width: 560px) {
+  .card {
+    grid-template-columns: 48px 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+  .logo,
+  .logoFallback {
+    width: 48px;
+    height: 48px;
+  }
+}

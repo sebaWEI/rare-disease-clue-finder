@@ -86,3 +86,37 @@ export interface DescriptionItem {
 export interface DescribeMissingResponse {
   descriptions: DescriptionItem[];
 }
+
+export type GuideExpertType = "doctor" | "team" | "department" | string;
+
+export interface GuideHospital {
+  id: string;
+  name: string;
+  city: string;
+  map_query?: string;
+  lat?: number | null;
+  lng?: number | null;
+  logo_url?: string | null;
+  advantage?: string;
+}
+
+export interface GuideExpert {
+  id: string;
+  name: string;
+  type: GuideExpertType;
+  bio: string;
+  hospital: GuideHospital;
+}
+
+export interface DiseaseGuideResponse {
+  disease_id: string;
+  available: boolean;
+  name: string;
+  name_alt: string;
+  summary: string;
+  care_tips: string[];
+  specialty_keywords: string[];
+  experts: GuideExpert[];
+  cities: string[];
+  message?: string | null;
+}

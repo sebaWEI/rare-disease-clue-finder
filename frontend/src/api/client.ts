@@ -5,6 +5,7 @@
 import type {
   DescribeMissingPrediction,
   DescribeMissingResponse,
+  DiseaseGuideResponse,
   Lang,
   PredictResponse,
   SmartSearchResponse,
@@ -64,4 +65,11 @@ export function describeMissing(
     predictions,
     lang,
   });
+}
+
+/** Curated care-guide experts for a disease (WHS first; others placeholder). */
+export function fetchGuide(diseaseId: string, lang: Lang): Promise<DiseaseGuideResponse> {
+  return getJSON<DiseaseGuideResponse>(
+    `/api/guides/${encodeURIComponent(diseaseId)}?lang=${lang}`,
+  );
 }

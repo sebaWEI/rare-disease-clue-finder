@@ -1,0 +1,356 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbarText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hint {
+  font-size: 0.84rem;
+  color: var(--ink-mute);
+  line-height: 1.45;
+}
+
+.status {
+  font-size: 0.78rem;
+  color: var(--brand);
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stage {
+  --focus-anchor-x: 22%;
+  --fan-shift-px: -28px;
+  position: relative;
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 80% at 70% 20%, rgba(184, 217, 46, 0.08), transparent 55%),
+    linear-gradient(165deg, var(--surface) 0%, var(--paper-2) 100%);
+  overflow: hidden;
+  transition: min-height 0.9s linear;
+}
+
+.focus .stage {
+  min-height: 560px;
+}
+
+.mapPane {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.mapHost {
+  width: 100%;
+  height: 100%;
+}
+
+.mapVignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.55s ease 0.25s;
+  background: radial-gradient(
+    circle 62vmin at var(--focus-anchor-x, 22%) 50%,
+    transparent 0%,
+    transparent 36%,
+    rgba(251, 248, 241, 0.28) 52%,
+    rgba(251, 248, 241, 0.62) 66%,
+    rgba(251, 248, 241, 0.9) 80%
+  );
+}
+
+.mapVignetteOn {
+  opacity: 1;
+}
+
+.mapFallback {
+  padding: 28px;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.fanPane {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(58%, 480px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px 24px 12px 0;
+  background: transparent;
+  pointer-events: none;
+  transform: translateX(var(--fan-shift-px, -28px));
+}
+
+.fanPaneReady {
+  animation: fan-enter 0.5s var(--ease) both;
+}
+
+.focus .fanOrbit,
+.focus .dots,
+.focus .fanCard {
+  pointer-events: auto;
+}
+
+.fanOrbit {
+  position: relative;
+  height: 520px;
+  margin-left: 0;
+}
+
+.fanCard {
+  --card-w: 280px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--card-w);
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(255, 253, 248, 0.55);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  overflow: hidden;
+  transform-origin: left center;
+  transition:
+    opacity 0.28s var(--ease),
+    transform 0.34s cubic-bezier(0.22, 0.61, 0.36, 1),
+    background 0.22s var(--ease),
+    border-color 0.22s var(--ease),
+    box-shadow 0.22s var(--ease);
+  will-change: transform, opacity;
+}
+
+.fanCardCenter {
+  background: var(--card);
+  border-color: var(--brand);
+  box-shadow: var(--shadow-md);
+}
+
+.fanCardCenter:hover {
+  border-color: var(--brand-2);
+}
+
+.fanHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.fanLogo,
+.fanLogoFallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: var(--surface-2);
+}
+
+.fanLogoFallback {
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fanMeta {
+  min-width: 0;
+  flex: 1;
+}
+
+.fanName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fanHospital {
+  font-size: 0.72rem;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.openHint {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: var(--brand);
+  white-space: nowrap;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background: var(--line-2);
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.dotActive {
+  background: var(--brand);
+  transform: scale(1.35);
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.legendBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: var(--r-pill);
+  padding: 6px 11px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.legendBtn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.legendMark {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #7fa892;
+}
+
+.legendN {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+
+@keyframes map-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fan-enter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--fan-shift-px, -28px)) translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(var(--fan-shift-px, -28px)) translateX(0);
+  }
+}
+
+@media (max-width: 860px) {
+  .focus .stage {
+    min-height: auto;
+  }
+
+  .mapVignette {
+    background: radial-gradient(
+      circle 72vw at 50% 42%,
+      transparent 0%,
+      transparent 40%,
+      rgba(251, 248, 241, 0.45) 62%,
+      rgba(251, 248, 241, 0.88) 82%
+    );
+  }
+
+  .fanPane {
+    position: relative;
+    width: 100%;
+    transform: none;
+    padding: 4px 12px 16px;
+  }
+
+  .fanPaneReady {
+    animation: map-rise 0.45s var(--ease) both;
+  }
+
+  .fanOrbit {
+    height: 400px;
+    margin-left: 0;
+  }
+
+  .fanCard {
+    --card-w: min(280px, 82vw);
+    left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage,
+  .fanCard,
+  .mapVignette,
+  .provinceBadge,
+  .fanPane {
+    animation: none !important;
+    transition: none !important;
+  }
+}

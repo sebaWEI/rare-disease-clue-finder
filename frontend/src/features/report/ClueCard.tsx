@@ -1,5 +1,7 @@
+import { Link } from "react-router-dom";
 import { useI18n } from "../../i18n/i18n";
 import { CoverageBar } from "../../components/ui/CoverageBar";
+import { diseasePath } from "../../lib/diseasePath";
 import type { DiseaseResult } from "../../types";
 import styles from "./report.module.css";
 
@@ -27,7 +29,13 @@ export function ClueCard({ disease, index }: ClueCardProps) {
           <div className={`${styles.rank} ${rankClass}`}>{index + 1}</div>
           <div style={{ minWidth: 0 }}>
             <div className={styles.clueId}>{disease.disease_id}</div>
-            <div className={styles.clueName}>{disease.disease_name}</div>
+            <Link
+              className={styles.clueNameLink}
+              to={diseasePath(disease.disease_id)}
+              title={t("guide_open")}
+            >
+              {disease.disease_name}
+            </Link>
           </div>
         </div>
         <div className={styles.clueCoverage}>

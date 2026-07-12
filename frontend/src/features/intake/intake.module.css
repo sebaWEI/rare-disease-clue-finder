@@ -324,6 +324,22 @@
   color: var(--ink);
   margin-bottom: 4px;
 }
+.topNameLink {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 4px;
+  display: inline-block;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.topNameLink:hover {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
 .topId {
   font-family: var(--font-mono);
   font-size: 0.66rem;
@@ -402,6 +418,17 @@
 .otherName {
   font-weight: 500;
   font-size: 0.9rem;
+}
+.otherNameLink {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+}
+.otherNameLink:hover {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
 }
 .otherMeta {
   display: flex;

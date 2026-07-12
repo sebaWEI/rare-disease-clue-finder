@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import { useI18n } from "../../i18n/i18n";
 import { CoverageBar } from "../../components/ui/CoverageBar";
 import { Button } from "../../components/ui/Button";
 import { coverageColor, pct } from "../../lib/format";
+import { diseasePath } from "../../lib/diseasePath";
 import type { PredictResponse } from "../../types";
 import styles from "./intake.module.css";
 
@@ -47,7 +49,9 @@ export function AutoResult({ data, onViewReport }: AutoResultProps) {
               <div className={styles.othersHead}>{t("other_candidates")}</div>
               {results.slice(1).map((d) => (
                 <div key={d.disease_id} className={styles.otherRow}>
-                  <span className={styles.otherName}>{d.disease_name}</span>
+                  <Link className={styles.otherNameLink} to={diseasePath(d.disease_id)}>
+                    {d.disease_name}
+                  </Link>
                   <span className={styles.otherMeta}>
                     <span style={{ color: coverageColor(d.explained_ratio) }}>
                       {pct(d.explained_ratio)}%
@@ -76,7 +80,9 @@ function TopMatch({ data }: { data: PredictResponse }) {
   return (
     <div className={styles.topMatch}>
       <div className={styles.topKicker}>{t("top_match")}</div>
-      <div className={styles.topName}>{top.disease_name}</div>
+      <Link className={styles.topNameLink} to={diseasePath(top.disease_id)}>
+        {top.disease_name}
+      </Link>
       <div className={styles.topId}>{top.disease_id}</div>
       <div className={styles.topMeta}>
         <div className={styles.topStat}>

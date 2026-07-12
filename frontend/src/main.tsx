@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import { I18nProvider } from "./i18n/i18n";
 import App from "./App";
 import "./styles/global.css";
@@ -9,8 +10,10 @@ if (!rootEl) throw new Error("Root element #root not found");
 
 createRoot(rootEl).render(
   <StrictMode>
-    <I18nProvider>
-      <App />
-    </I18nProvider>
+    <BrowserRouter>
+      <I18nProvider>
+        <App />
+      </I18nProvider>
+    </BrowserRouter>
   </StrictMode>,
 );

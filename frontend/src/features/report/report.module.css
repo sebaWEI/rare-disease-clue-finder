@@ -201,6 +201,20 @@
   color: var(--ink);
   line-height: 1.2;
 }
+.clueNameLink {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.2;
+  display: inline;
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.clueNameLink:hover {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
 .clueCoverage {
   min-width: 130px;
   flex-shrink: 0;

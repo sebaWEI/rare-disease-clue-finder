@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Routes, Route } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { AssuranceBar } from "./components/layout/AssuranceBar";
 import { Footer } from "./components/layout/Footer";
 import { IntakePanel, type IntakeMode } from "./features/intake/IntakePanel";
 import { ClueReport } from "./features/report/ClueReport";
+import { DiseaseGuidePage } from "./features/guide/DiseaseGuidePage";
+import { ExpertDetailPage } from "./features/guide/ExpertDetailPage";
 import { useI18n } from "./i18n/i18n";
 import { useHpoSelection } from "./hooks/useHpoSelection";
 import { autoDiagnose, predict, smartSearch } from "./api/client";
@@ -13,7 +16,7 @@ import layout from "./components/layout/layout.module.css";
 
 const MIN_CHARS = 3;
 
-export default function App() {
+function HomePage() {
   const { t, lang } = useI18n();
   const selection = useHpoSelection();
 
@@ -154,7 +157,6 @@ export default function App() {
 
   return (
     <>
-      <Header />
       <AssuranceBar />
       <main className={layout.main}>
         {view === "intake" ? (
@@ -188,6 +190,33 @@ export default function App() {
           )
         )}
       </main>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <Header />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/disease/:diseaseId"
+          element={
+            <main className={layout.main}>
+              <DiseaseGuidePage />
+            </main>
+          }
+        />
+        <Route
+          path="/disease/:diseaseId/expert/:expertId"
+          element={
+            <main className={layout.main}>
+              <ExpertDetailPage />
+            </main>
+          }
+        />
+      </Routes>
       <Footer />
     </>
   );

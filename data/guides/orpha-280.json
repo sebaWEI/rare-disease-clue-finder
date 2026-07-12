@@ -1,0 +1,514 @@
+{
+  "disease_id": "ORPHA:280",
+  "slug": "whs",
+  "name_en": "Wolf-Hirschhorn syndrome",
+  "name_zh": "Wolf-Hirschhorn 综合征",
+  "experts": [
+    {
+      "id": "e_4c0031aa5706",
+      "name_zh": "罕见病医学科",
+      "name_en": "Department of Rare Disease Medicine",
+      "type": "department",
+      "hospital_id": "h_f9f8133280",
+      "bio_zh": "罕见病医学科是北京协和医院2023年新成立的、国内首个开展罕见病及疑难未诊断疾病临床诊疗的专科。以北京协和医院百年来在罕见病领域的综合领先优势为基础，对标国际一流疑难罕见病医学中心，依托全国罕见病诊疗协作网、国家罕见病注册登记系统、国家罕见病质控中心、疑难重症及罕见病全国重点实验、转化医学国家重大科技基础设施，罕见病医学科设置罕见病联合门诊、病房、遗传咨询分析平台及教学平台，并定位为平台型科室，充分发挥具备顶尖临床诊疗能力的多学科团队在医、教、研各方面的中国引领作用。",
+      "bio_en": "The Department of Rare Diseases Medicine is a newly established department at Peking Union Medical College Hospital in 2023, the first of its kind in China dedicated to the clinical diagnosis and treatment of rare diseases and undiagnosed conditions. Building on Peking Union Medical College Hospital's century-long comprehensive leadership in the field of rare diseases, benchmarking against world-class rare disease medical centers, and leveraging the National Rare Disease Diagnosis and Treatment Collaboration Network, the National Rare Disease Registry System, the National Rare Disease Quality Control Center, the National Key Laboratory of Difficult, Severe, and Rare Diseases, and the National Major Science and Technology Infrastructure for Translational Medicine, the Department of Rare Diseases Medicine has set up a joint rare disease clinic, inpatient wards, a genetic counseling and analysis platform, and a teaching platform. It is positioned as a platform-based department, fully leveraging the leading role of multidisciplinary teams with top-tier clinical diagnostic and treatment capabilities in medical care, education, and research across China.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_e05dcef5571f",
+      "name_zh": "崔蕴璞副主任医师",
+      "name_en": "Deputy Chief Physician Cui Yunpu",
+      "type": "doctor",
+      "hospital_id": "h_82443144da",
+      "bio_zh": "擅长诊治各种儿童内分泌系统疾病包括：身材矮小、性早熟、糖尿病、甲状腺疾病、甲状旁腺疾病、代谢性骨病、肾上腺疾病、肥胖等。擅长各种新生儿疾病及新生儿疑难危急重症的诊断及治疗。多年从事儿童保健门诊工作，对于婴幼儿合理喂养，发育评估，发育障碍的识别，高危新生儿及极低出生体重儿的随访保健具有丰富的经验。北京大学医学部儿科临床医学博士。美国密歇根大学安娜堡分校附属 C. S. Mott Children’s Hospital学习儿童内分泌疾病。",
+      "bio_en": "Specialises in diagnosing and treating various paediatric endocrine system diseases, including short stature, precocious puberty, diabetes, thyroid disorders, parathyroid disorders, metabolic bone disease, adrenal disorders, and obesity. Also skilled in the diagnosis and treatment of various neonatal diseases and complex, critical neonatal conditions. With many years of experience in child health outpatient clinics, has extensive expertise in appropriate infant feeding, developmental assessment, identification of developmental disorders, and follow-up care for high-risk neonates and very low birth weight infants. Holds a Doctorate in Paediatric Clinical Medicine from Peking University Health Science Center. Studied paediatric endocrine diseases at C. S. Mott Children's Hospital, affiliated with the University of Michigan, Ann Arbor.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_c40a34cc8afd",
+      "name_zh": "遗传异常的早发型胎儿生长受限诊疗团队",
+      "name_en": "Diagnosis and Treatment Team for Early-Onset Fetal Growth Restriction with Genetic Abnormalities",
+      "type": "team",
+      "hospital_id": "h_82443144da",
+      "bio_zh": "本团队由北京大学第三医院产科、儿科、生殖遗传等学科多学科合作组建，共10人，其中团队带头人1名，核心成员7名。主要诊疗方向是对胎儿生长受限相关疾病利用先进的临床影像学技术和分子诊断技术，对疾病实施快速精准的病因学、诊断、预后、风险评估、治疗等。本团队力求打造精确施治，研究创新型诊疗团队。\n本团队由多个相关学科负责人参与临床诊疗及疾病探索。带头人魏瑗主任医师，擅长领域为胎儿医学、双胎妊娠、宫内治疗等；长期致力于胎儿疾病的科学研究和临床诊治。核心成员赵扬玉主任医师，是国家十三五重点专项首席医学家、国家产科质量控制中心副主任，在出生缺陷监测等疾病的诊治方面积累了丰富的临床经验。核心成员闫丽盈研究员，是国家优秀青年基金获得者，研究方向为胚胎发育与遗传诊断，所带团队在罕见遗传病分子诊断、新技术研发、技术应用等方面都有丰富的经验。本团队已牵头参与多个关于胎儿宫内发育不良及孕期妊娠高风险的治疗和防治专项及重点研发项目，参与制定国内专家指南等。",
+      "bio_en": "This team is formed through multidisciplinary collaboration among the Obstetrics, Paediatrics, and Reproductive Genetics departments of Peking University Third Hospital, comprising 10 members, including 1 team leader and 7 core members. The main focus of diagnosis and treatment is on fetal growth restriction-related disorders, utilising advanced clinical imaging and molecular diagnostic technologies to achieve rapid and precise aetiological, diagnostic, prognostic, risk assessment, and therapeutic management. The team aims to build a precision treatment and innovative diagnostic and therapeutic team.\nThe team involves heads of multiple relevant disciplines in clinical diagnosis, treatment, and disease research. The leader, Chief Physician Wei Yuan, specialises in fetal medicine, twin pregnancies, and intrauterine therapy, with a long-term commitment to scientific research and clinical management of fetal diseases. Core member Chief Physician Zhao Yangyu is the Chief Medical Scientist of the National Key Special Project for the 13th Five-Year Plan and Deputy Director of the National Obstetric Quality Control Centre, possessing extensive clinical experience in the diagnosis and treatment of birth defect surveillance and other conditions. Core member Researcher Yan Liying is a recipient of the National Outstanding Youth Fund, with research focused on embryonic development and genetic diagnosis; her team has extensive experience in molecular diagnosis of rare genetic diseases, development of new technologies, and their application. The team has led and participated in multiple special projects and key research initiatives on intrauterine growth restriction and high-risk pregnancy management, and has contributed to the development of national expert guidelines.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_97c14996e80b",
+      "name_zh": "杨艳玲主任医师",
+      "name_en": "Chief Physician Yang Yanling",
+      "type": "doctor",
+      "hospital_id": "h_6d4474828e",
+      "bio_zh": "1984年毕业于北京大学医学部（原北京医科大学），致力于儿童常见病及罕见病的防治诊疗。近年来以遗传代谢病、内分泌疾病等疾病的全生命周期防治为重点，确立了多种罕见病的诊断、治疗与预防方法，推动新生儿筛查及高危筛查技术普及，与多学科同道广泛合作，建立个体化饮食干预、营养支持及药物治疗策略，改善了氨基酸、有机酸、脂肪酸代谢病及线粒体病等疾病患者的转归。获得第六届妇幼健康科学技术奖科技成果奖一等奖、第十届宋庆龄儿科医学奖、2025年中华医学科学技术奖三等奖、2024年北京医学科技奖一等奖。2025年获得第七届“国之名医·卓越建树”奖。",
+      "bio_en": "Graduated from Peking University Health Science Center (formerly Beijing Medical University) in 1984, dedicated to the prevention, diagnosis, and treatment of common and rare diseases in children. In recent years, the focus has been on the full-life-cycle prevention and treatment of genetic metabolic diseases and endocrine disorders, establishing methods for the diagnosis, treatment, and prevention of various rare diseases, promoting the popularisation of newborn screening and high-risk screening technologies, collaborating extensively with multidisciplinary colleagues, and developing individualised dietary intervention, nutritional support, and medication strategies, thereby improving outcomes for patients with amino acid, organic acid, fatty acid metabolic disorders, and mitochondrial diseases. Awarded the First Prize of the Sixth Maternal and Child Health Science and Technology Award, the Tenth Soong Ching Ling Pediatric Medicine Award, the Third Prize of the 2025 Chinese Medical Science and Technology Award, and the First Prize of the 2024 Beijing Medical Science and Technology Award. In 2025, received the seventh 'National Famous Doctor · Outstanding Contribution' award.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_b471c034a2e1",
+      "name_zh": "吴晔主任医师",
+      "name_en": "Chief Physician Wu Ye",
+      "type": "doctor",
+      "hospital_id": "h_6d4474828e",
+      "bio_zh": "北京大学第一医院儿童医学中心儿童神经内科主任，儿童神经内科临床试验专业负责人，二级教授，主任医师，医学博士，博士生导师。主要研究领域：遗传性及获得性脑白质病的发生机制及干预、癫痫相关皮质发育畸形的分子机制以及癫痫的神经调控。",
+      "bio_en": "Director of the Pediatric Neurology Department, Pediatric Medical Center, Peking University First Hospital; Principal Investigator for clinical trials in pediatric neurology; Level 2 Professor; Chief Physician; Doctor of Medicine; Doctoral Supervisor. Main research areas: mechanisms and interventions of hereditary and acquired leukodystrophies, molecular mechanisms of epilepsy-related cortical malformations, and neuromodulation of epilepsy.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_67fe14a834fa",
+      "name_zh": "张尧主任医师",
+      "name_en": "Chief Physician Zhang Yao",
+      "type": "doctor",
+      "hospital_id": "h_6d4474828e",
+      "bio_zh": "长期致力于儿童各种神经系统疾病如癫痫、发育迟缓、神经系统遗传性疾病、免疫性疾病；各种遗传代谢病的临床诊治如有机酸血症、氨基酸血症、线粒体病、糖和脂肪酸代谢病、尿素循环障碍、溶酶体贮积症等；及生长发育相关疾病的诊治及研究。主持国自然面上项目、博士后基金和博士点新教师基金等。以第一作者和通讯作者发表文章30余篇。",
+      "bio_en": "Long-term dedication to the clinical diagnosis and treatment of various pediatric neurological disorders such as epilepsy, developmental delay, hereditary neurological diseases, and immune-mediated diseases; various inherited metabolic diseases including organic acidemias, aminoacidemias, mitochondrial diseases, disorders of carbohydrate and fatty acid metabolism, urea cycle disorders, and lysosomal storage diseases; as well as the diagnosis, treatment, and research of growth and development-related conditions. Has led projects funded by the National Natural Science Foundation of China (General Program), the Postdoctoral Science Foundation, and the Doctoral Program New Teacher Fund. Published over 30 articles as first author or corresponding author.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_9c0f440ff04a",
+      "name_zh": "杨玉琴主任医师",
+      "name_en": "Chief Physician Yang Yuqin",
+      "type": "doctor",
+      "hospital_id": "h_e11920d0c0",
+      "bio_zh": "1984年毕业于天津医科大学，对儿童难治性癫痫具有丰富的临床经验。擅长儿童难治性癫痫的诊治。兼任中华医学会儿科分会常委、中国医师协会分会儿科医师分会常委、中国抗癫痫协会常务理事、天津市医学会儿科分会副主委、神经学组组长、天津市抗癫痫协会副会长，天津市医学会神经病学分会常委 癫痫组组长、天津市医学会心身医学分会儿科组组长，天津市医师协会儿科医师分会副会长。发病论文60余篇，参编专著6部，涉及儿童神经系统疾病方向。\n擅长领域：儿童难治性癫痫、神经系统罕见病、神经发育障碍性疾病、神经遗传代谢病、神经免疫性疾病及神经电生理。",
+      "bio_en": "Graduated from Tianjin Medical University in 1984, with extensive clinical experience in paediatric refractory epilepsy. Specialises in the diagnosis and treatment of paediatric refractory epilepsy. Concurrently serves as a Standing Committee Member of the Paediatrics Branch of the Chinese Medical Association, a Standing Committee Member of the Paediatricians Branch of the Chinese Medical Doctor Association, an Executive Director of the China Anti-Epilepsy Association, a Vice Chairman of the Paediatrics Branch of the Tianjin Medical Association and Leader of the Neurology Group, a Vice President of the Tianjin Anti-Epilepsy Association, a Standing Committee Member of the Neurology Branch of the Tianjin Medical Association and Leader of the Epilepsy Group, a Leader of the Paediatrics Group of the Psychosomatic Medicine Branch of the Tianjin Medical Association, and a Vice President of the Paediatricians Branch of the Tianjin Medical Doctor Association. Has published over 60 papers and contributed to 6 monographs, focusing on paediatric neurological disorders.\nAreas of expertise: Paediatric refractory epilepsy, rare neurological diseases, neurodevelopmental disorders, neurogenetic and metabolic diseases, neuroimmune diseases, and neuroelectrophysiology.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_7b5d0df0a478",
+      "name_zh": "于晓莉主任医师",
+      "name_en": "Chief Physician Yu Xiaoli",
+      "type": "doctor",
+      "hospital_id": "h_e11920d0c0",
+      "bio_zh": "神经内科主任医师，硕士研究生导师。1994年开始，一直从事儿科临床工作。2002-2003年于北大妇儿医院神经内科及脑电图室、北大第一医院神经内科进修学习，2012年于协和医院遗传门诊进修学习。现任中华医学会儿科分会神经学组委员，中国抗癫痫协会创新与转化委员会委员，中国抗癫痫协会精准医学与药物不良反应委员会委员，天津康复学会言语康复专委会主任委员，天津医学会神经病学分会委员及癫痫学组副组长，天津医疗健康学会神经肌病委员会副主任委员，天津医学会遗传学分会委员，天津抗癫痫协会常委等。兼任天津市卫健委罕见病质量控制中心主任，天津市卫健委神经内科质量控制中心委员。主持及参与天津市自然科学基金、市局级课题数项并通过市科技成果认定。\n擅长领域：儿童癫痫等发作性疾病及脑电图、神经系统罕见病、言语、运动及认知发育异常疾病、神经遗传代谢病、神经肌肉病、神经免疫性疾病等。",
+      "bio_en": "Chief Physician of Neurology, Master's Supervisor. Since 1994, has been engaged in paediatric clinical work. From 2002 to 2003, studied at the Neurology Department and EEG Room of Peking University Women and Children's Hospital, and the Neurology Department of Peking University First Hospital. In 2012, studied at the Genetics Clinic of Peking Union Medical College Hospital. Currently serves as a member of the Neurology Group of the Paediatrics Branch of the Chinese Medical Association, a member of the Innovation and Transformation Committee of the China Anti-Epilepsy Association, a member of the Precision Medicine and Adverse Drug Reaction Committee of the China Anti-Epilepsy Association, Chair of the Speech Rehabilitation Special Committee of the Tianjin Rehabilitation Society, a member of the Neurology Branch of the Tianjin Medical Association and Deputy Head of the Epilepsy Group, Deputy Chair of the Neuromuscular Disease Committee of the Tianjin Medical and Health Society, a member of the Genetics Branch of the Tianjin Medical Association, and a Standing Committee member of the Tianjin Anti-Epilepsy Association. Also serves as Director of the Rare Disease Quality Control Centre of the Tianjin Municipal Health Commission, and a member of the Neurology Quality Control Centre of the Tianjin Municipal Health Commission. Has led and participated in several projects funded by the Tianjin Natural Science Foundation and municipal/bureau-level grants, which have passed municipal scientific and technological achievement recognition.\nAreas of expertise: Paediatric epilepsy and other paroxysmal disorders and EEG, rare neurological diseases, speech, motor and cognitive developmental disorders, neurogenetic metabolic diseases, neuromuscular diseases, neuroimmune diseases, etc.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_1446b30d37df",
+      "name_zh": "赵云静主任医师",
+      "name_en": "Chief Physician Zhao Yunjing",
+      "type": "doctor",
+      "hospital_id": "h_aacaaa0655",
+      "bio_zh": "教授，主任医师，硕士生导师，发育儿科副主任，现任中华医学会儿科分会内分泌遗传代谢学组委员，中华医学会儿科分会发育行为学组东蒙协作组副组长，中华医学会儿科分会内分泌遗传代谢学组东蒙协作组常委，辽宁医学会儿科分会儿保学组委员、沈阳医学会发育儿科分会主任委员等。专业特长：语言发育迟缓、功能性构音障碍、注意缺陷多动障碍、抽动症等智力心理发育偏离及身材矮小、性早熟，肥胖症等体格发育偏离的诊治。 熟练掌握常见病维生素、微量元素缺乏如佝偻病、贫血等的诊治。",
+      "bio_en": "Professor, Chief Physician, Master's Supervisor, Deputy Director of Developmental Pediatrics. Currently serves as a member of the Endocrinology, Genetics and Metabolism Group of the Chinese Pediatric Society, Deputy Head of the East-Mongolia Collaboration Group of the Developmental and Behavioral Group of the Chinese Pediatric Society, Standing Committee Member of the East-Mongolia Collaboration Group of the Endocrinology, Genetics and Metabolism Group of the Chinese Pediatric Society, member of the Child Health Group of the Liaoning Pediatric Society, and Chair of the Developmental Pediatrics Branch of the Shenyang Medical Association. Specializes in the diagnosis and treatment of language development delay, functional articulation disorders, attention deficit hyperactivity disorder, tic disorders, deviations in intellectual and psychological development, as well as short stature, precocious puberty, obesity, and other deviations in physical development. Proficient in managing common conditions such as vitamin and trace element deficiencies, including rickets and anemia.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_082e2398c59a",
+      "name_zh": "发育儿科",
+      "name_en": "Department of Developmental Pediatrics",
+      "type": "department",
+      "hospital_id": "h_aacaaa0655",
+      "bio_zh": "中国医科大学附属盛京医院发育儿科由我国著名儿科教授李助萱创建于1982年，是我国较早成立的针对儿童保健、儿童营养、生长发育、发育行为、儿童遗传的科室之一。共有医生10人，其中教授 4人， 副教授 1人 。护士10人。\n4名医生分别在法国和美国留学或研修。每年门诊量约5万人次。承担国家自然基金课题6项，省、部级科研课题20余项，发表SCI收录科研论文20余篇。",
+      "bio_en": "The Department of Developmental Pediatrics at Shengjing Hospital of China Medical University was founded in 1982 by the renowned Chinese paediatric professor Li Zhuxuan. It is one of the earliest departments in China dedicated to child healthcare, child nutrition, growth and development, developmental behaviour, and paediatric genetics. The department has 10 doctors, including 4 professors and 1 associate professor, as well as 10 nurses. Four doctors have studied or conducted research in France or the United States. The annual outpatient volume is approximately 50,000 visits. The department has undertaken 6 projects funded by the National Natural Science Foundation of China and over 20 provincial and ministerial-level research projects, and has published more than 20 SCI-indexed research papers.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_ead453d9d391",
+      "name_zh": "凌云主任医师",
+      "name_en": "Chief Physician Ling Yun",
+      "type": "doctor",
+      "hospital_id": "h_31ea3541e4",
+      "bio_zh": "主任医师，内科学博士，留法博士后，复旦大学博士生导师。现任哈尔滨医科大学附属第一医院副院长(挂职)、上海市公共卫生临床中心副主任(副院长)、药物及医疗器械临床试验机构主任。",
+      "bio_en": "Chief Physician, Doctor of Internal Medicine, Postdoctoral Fellow in France, Doctoral Supervisor at Fudan University. Currently serving as Vice President (seconded) of the First Affiliated Hospital of Harbin Medical University, Deputy Director (Vice President) of Shanghai Public Health Clinical Center, and Director of the Drug and Medical Device Clinical Trial Institution.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_f8dd66a56d2d",
+      "name_zh": "丰宏林主任医师",
+      "name_en": "Chief Physician Feng Honglin",
+      "type": "doctor",
+      "hospital_id": "h_31ea3541e4",
+      "bio_zh": "一级主任医师、教授、星联教授、博士生导师、北京协和医院神经内科博士后，神经科疑难病会诊中心主任，国家自然科学基金评委、国家科技奖评审专家、首届龙江名医，全国17个神经科疾病指南或专家共识制定的专家组成员。省内率先开展神经肌肉病理诊断。肌萎缩侧索硬化等神经遗传变性病诊治国内先进。主持国家自然科学基金面上及重大研究计划项目6项，第一或通讯作者发表SCI收录文章20余篇，获省政府科学技术二等奖2项。\n擅长方向：脑血管病、神经系统罕见病及疑难病、肌萎缩侧索硬化、震颤、帕金森病及帕金森综合征、神经肌肉病、神经系统遗传变性病。",
+      "bio_en": "Chief Physician (Level 1), Professor, Xinglian Professor, Doctoral Supervisor, Postdoctoral Fellow in Neurology at Peking Union Medical College Hospital, Director of the Center for Difficult Neurological Diseases, Reviewer for the National Natural Science Foundation of China, Expert Reviewer for the National Science and Technology Awards, First Longjiang Famous Doctor, and member of expert panels for 17 national neurological disease guidelines or expert consensus statements. Pioneered neuromuscular pathological diagnosis in the province. Achieved advanced domestic-level diagnosis and treatment of neurodegenerative and genetic diseases such as amyotrophic lateral sclerosis. Led 6 projects under the General Program and Major Research Plan of the National Natural Science Foundation of China, published over 20 SCI-indexed articles as first or corresponding author, and received 2 Second-Class Provincial Science and Technology Awards.\nAreas of expertise: Cerebrovascular diseases, rare and difficult neurological disorders, amyotrophic lateral sclerosis, tremor, Parkinson's disease and parkinsonism, neuromuscular diseases, and neurodegenerative genetic disorders.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_e08591760e9b",
+      "name_zh": "儿童罕见病诊治中心",
+      "name_en": "Children's Rare Disease Diagnosis and Treatment Centre",
+      "type": "team",
+      "hospital_id": "h_f1bba881e4",
+      "bio_zh": "该中心2018年落户上海交通大学医学院附属新华医院，依托上海市儿科医学研究所搭建多学科MDT诊疗平台，主打儿童遗传代谢、骨骼发育等罕见病诊疗，构建孕前-儿童-成人全生命周期管理体系 。中心年接诊罕见病患儿超7000人，九成患儿来自外地，可诊断800余种罕见病，建有十万级样本生物数据库。集精准基因诊断、靶向治疗、特医食品研发、遗传咨询与慈善救助于一体，牵头制定多项国内诊疗共识，是国内儿童罕见病疑难病例会诊、临床研究与质控的核心平台。",
+      "bio_en": "Established in 2018 at Xinhua Hospital Affiliated to Shanghai Jiao Tong University School of Medicine, the centre leverages the Shanghai Pediatric Research Institute to build a multidisciplinary MDT diagnosis and treatment platform. It focuses on rare diseases such as paediatric genetic metabolic disorders and skeletal development, constructing a full lifecycle management system from pre-pregnancy to childhood and adulthood. The centre sees over 7,000 children with rare diseases annually, 90% of whom come from outside the city. It can diagnose more than 800 rare diseases and maintains a biobank with a hundred-thousand-level sample database. Integrating precise genetic diagnosis, targeted therapy, special medical food development, genetic counselling, and charitable assistance, it has led the development of multiple domestic diagnosis and treatment consensus guidelines. It serves as a core platform for consultation, clinical research, and quality control of complex paediatric rare disease cases in China.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_fdded358e7f5",
+      "name_zh": "陆文丽主任医师",
+      "name_en": "Chief Physician Lu Wenli",
+      "type": "doctor",
+      "hospital_id": "h_8bdde2b784",
+      "bio_zh": "2001年毕业于上海第二医科大学临床医学专业，2001年7月起至今，上海瑞金医院儿内科任住院医师、主治医师、副主任医师及主任医师；目前担任儿内科行政副主任职务。2004-2007年攻读硕士学位。2011年获瑞金医院“刘浩清人才项目”，赴美国oklahoma大学健康卫生中心1年任访问学者，从事“儿童性发育方面”相关研究。2012年回国后获上海市卫生局“上海优秀青年医师培养计划”，2012年获上海市卫生局“优秀青年医师”称号；2014年获上海福利会“优秀志愿者”称号。主要研究方向：儿童生长发育及甲状腺疾病等儿童内分泌专业。",
+      "bio_en": "Graduated from Shanghai Second Medical University in 2001 with a degree in Clinical Medicine. From July 2001 to present, worked at Shanghai Ruijin Hospital, Department of Paediatrics, as a resident, attending physician, associate chief physician, and chief physician; currently serves as the Deputy Director of the Department of Paediatrics. Pursued a master's degree from 2004 to 2007. In 2011, received the 'Liu Haoqing Talent Project' from Ruijin Hospital and went to the University of Oklahoma Health Sciences Center in the United States as a visiting scholar for one year, conducting research on 'childhood sexual development'. After returning to China in 2012, was awarded the 'Shanghai Excellent Young Physician Training Programme' by the Shanghai Municipal Health Bureau, and received the title of 'Excellent Young Physician' from the Shanghai Municipal Health Bureau in 2012; in 2014, was awarded the 'Excellent Volunteer' title by the Shanghai Welfare Association. Main research interests: paediatric endocrinology, including childhood growth and development, and thyroid diseases.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_e13be2f9857e",
+      "name_zh": "肖园主任医师",
+      "name_en": "Chief Physician Xiao Yuan",
+      "type": "doctor",
+      "hospital_id": "h_8bdde2b784",
+      "bio_zh": "毕业于上海交通大学医学院，儿科学博士学位；2006年起在瑞金医院儿内科工作；2010年受ESPE资助赴英国剑桥大学进修儿童内分泌疾病；现任瑞金医院儿内科科副主任，硕士研究生导师。兼任中华医学会儿科分会内分泌遗传学组青年委员，中国医师协会青春医学分会青年学组副组长，中华医学会消化分会儿科学组秘书，儿科消化内镜协作组秘书，中国妇幼保健协会小儿消化微创学组青年委员。",
+      "bio_en": "Graduated from Shanghai Jiao Tong University School of Medicine with a doctorate in pediatrics; has worked in the Department of Pediatric Internal Medicine at Ruijin Hospital since 2006; in 2010, funded by ESPE, studied pediatric endocrine diseases at the University of Cambridge in the UK; currently serves as Deputy Director of the Department of Pediatric Internal Medicine at Ruijin Hospital and a master's supervisor. Also holds positions as a Youth Committee Member of the Endocrinology and Genetics Group of the Chinese Medical Association's Pediatric Branch, Deputy Head of the Youth Group of the Chinese Medical Doctor Association's Adolescent Medicine Branch, Secretary of the Pediatric Group of the Chinese Medical Association's Gastroenterology Branch, Secretary of the Pediatric Digestive Endoscopy Collaboration Group, and Youth Committee Member of the Pediatric Minimally Invasive Surgery Group of the China Maternal and Child Health Association.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_b8f9833ca3e5",
+      "name_zh": "殷蕾主任医师",
+      "name_en": "Chief Physician Yin Lei",
+      "type": "doctor",
+      "hospital_id": "h_0323ecbd92",
+      "bio_zh": "肾脏科，主任医师，博士。临床擅长婴幼儿复杂尿路感染、难治性肾病综合征、IgA肾病、急性肾损伤、儿童高血压、肾小管疾病、过敏性紫癜、幼年特发性关节炎、系统性红斑狼疮、皮肌炎等儿童肾脏和风湿科疾病的诊治，并且在儿童罕见疑难病的诊断方面，也有比较丰富的临床经验。目前担任上海儿童医学中心肾脏科主任、罕见病诊治中心常务副主任、内科教研室副主任，中国药师协会罕见病用药工作委员会委员、上海市医学会罕见病分会委员、上海市医学会儿科分会肾脏学组副组长，曾赴美国辛辛那提儿童医院肾脏科和风湿科学习，并负责SCMC-芝加哥Comer儿童医院远程会诊工作，是国内第一部罕见病临床专著《可治性罕见病》一书的副主编。",
+      "bio_en": "Department of Nephrology, Chief Physician, PhD. Clinically skilled in diagnosing and treating paediatric kidney and rheumatic diseases including complex urinary tract infections in infants, refractory nephrotic syndrome, IgA nephropathy, acute kidney injury, childhood hypertension, tubulopathies, Henoch-Schönlein purpura, juvenile idiopathic arthritis, systemic lupus erythematosus, and dermatomyositis. Also has extensive clinical experience in diagnosing rare and difficult paediatric conditions. Currently serves as Director of the Department of Nephrology at Shanghai Children's Medical Center, Executive Deputy Director of the Rare Disease Diagnosis and Treatment Center, and Deputy Director of the Internal Medicine Teaching and Research Office. Member of the Rare Disease Medication Working Committee of the Chinese Pharmacists Association, Member of the Rare Disease Branch of the Shanghai Medical Association, and Deputy Head of the Nephrology Group of the Paediatrics Branch of the Shanghai Medical Association. Previously studied in the Departments of Nephrology and Rheumatology at Cincinnati Children's Hospital in the United States, and is responsible for the SCMC-Chicago Comer Children's Hospital telemedicine consultation programme. Deputy Editor-in-Chief of 'Treatable Rare Diseases', the first clinical monograph on rare diseases in China.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_9a3b97e65241",
+      "name_zh": "常国营副主任医师",
+      "name_en": "Deputy Chief Physician Chang Guoying",
+      "type": "doctor",
+      "hospital_id": "h_0323ecbd92",
+      "bio_zh": "长期从事儿童内分泌疾病、遗传代谢病及罕见病的临床与科研工作，具有扎实深厚的专业背景和丰富的诊疗经验。在儿童内分泌领域，擅长诊治儿童肥胖与糖代谢异常、各种类型低血糖、儿童糖尿病、甲状腺疾病、肾上腺疾病、矮小症、生长发育迟缓、性早熟、性发育障碍等常见与复杂疑难内分泌疾病，为大量患儿制定了精准、系统、长期可持续的管理方案。在遗传代谢与罕见病领域，致力于复杂罕见遗传病、遗传代谢病的早期识别、精准诊断与创新治疗探索。\n主要研究方向：聚焦遗传代谢病及罕见病的创新诊疗，提升其早期和精准诊断，并开展基因治疗等前沿治疗策略的临床探索及研究。致力于肥胖及糖代谢异常的基础与临床研究，重点研究胰岛素分泌及其调控机制，为代谢性疾病的科学评估和规范化管理提供依据。",
+      "bio_en": "Has long been engaged in clinical and scientific research on paediatric endocrine diseases, genetic metabolic diseases, and rare diseases, with a solid and profound professional background and extensive diagnostic and therapeutic experience. In the field of paediatric endocrinology, specialises in diagnosing and treating common and complex endocrine disorders such as childhood obesity and glucose metabolism abnormalities, various types of hypoglycaemia, childhood diabetes, thyroid diseases, adrenal diseases, short stature, growth retardation, precocious puberty, and disorders of sexual development. Has developed precise, systematic, and long-term sustainable management plans for a large number of paediatric patients. In the field of genetic metabolic and rare diseases, is dedicated to the early identification, precise diagnosis, and exploration of innovative treatments for complex rare genetic and metabolic diseases.\nMain research directions: Focus on innovative diagnosis and treatment of genetic metabolic diseases and rare diseases, improving their early and precise diagnosis, and conducting clinical exploration and research on cutting-edge therapeutic strategies such as gene therapy. Committed to basic and clinical research on obesity and glucose metabolism abnormalities, with a focus on studying insulin secretion and its regulatory mechanisms, providing a basis for scientific evaluation and standardised management of metabolic diseases.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_c44096f73636",
+      "name_zh": "朱敏主任医师",
+      "name_en": "Chief Physician Zhu Min",
+      "type": "doctor",
+      "hospital_id": "h_20cc52a5b4",
+      "bio_zh": "康复医学科副主任、医学博士、主任医师，副教授，硕士生导师。江苏省科教强卫青年人才，中国康复医学会儿童康复专业委员会罕见病学组委员，中国康复医学会神经网络康复学组青年委员、中国康复医学会康复治疗专业委员会言语康复学组委员、神经肌肉电生理诊断专业委员会常务委员、江苏省残疾人康复协会孤独症康复专业委员会委员(特聘专家)，江苏省康复医学会肌肉骨骼专委会委员，英国伦敦大学圣乔治医院儿科及康复部、意大利锡耶纳大学医院儿科访问学者。\n擅长：从事儿内科及康复科工作20余年，熟悉掌握儿内科各种常见病诊治、擅长脑瘫、孤独症谱系障碍、全面性发育迟缓、智力低下、注意缺陷与多动障碍、言语语言障碍（语言发育迟缓、构音障碍、口吃）、高危儿、罕见遗传代谢性疾病、神经肌肉疾病(脊髓性肌萎缩、肌营养不良)、脊柱侧弯、斜颈等诊断及治疗，在肉毒毒素注射方面有所专长，临床经验丰富。获得儿童言语语言治疗师高级专业技能证书。",
+      "bio_en": "Deputy Director of the Department of Rehabilitation Medicine, Doctor of Medicine, Chief Physician, Associate Professor, and Master's Supervisor. Jiangsu Province Young Talent in Science, Education, and Health Strengthening; Member of the Rare Disease Group of the Pediatric Rehabilitation Committee of the Chinese Association of Rehabilitation Medicine; Young Committee Member of the Neural Network Rehabilitation Group of the Chinese Association of Rehabilitation Medicine; Member of the Speech Rehabilitation Group of the Rehabilitation Therapy Committee of the Chinese Association of Rehabilitation Medicine; Standing Committee Member of the Neuromuscular Electrophysiological Diagnosis Committee; Specially Appointed Expert and Member of the Autism Rehabilitation Committee of the Jiangsu Disabled Persons' Rehabilitation Association; Member of the Musculoskeletal Committee of the Jiangsu Rehabilitation Medicine Association; Visiting Scholar in the Department of Paediatrics and Rehabilitation at St George's Hospital, University of London, UK, and the Department of Paediatrics at Siena University Hospital, Italy.\nExpertise: Over 20 years of clinical experience in paediatric internal medicine and rehabilitation medicine. Proficient in diagnosing and treating common paediatric conditions, including cerebral palsy, autism spectrum disorder, global developmental delay, intellectual disability, attention deficit hyperactivity disorder, speech and language disorders (language delay, dysarthria, stuttering), high-risk infants, rare genetic metabolic diseases, neuromuscular diseases (spinal muscular atrophy, muscular dystrophy), scoliosis, and torticollis. Specialises in botulinum toxin injections with extensive clinical experience. Holds an Advanced Professional Skills Certificate in Child Speech and Language Therapy.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_834ae4ecceba",
+      "name_zh": "童凡主任医师",
+      "name_en": "Chief Physician Tong Fan",
+      "type": "doctor",
+      "hospital_id": "h_a5c728b857",
+      "bio_zh": "浙江大学医学院附属儿童医院分子遗传中心遗传咨询平台负责人，出生缺陷与罕见病MDT负责人。曾赴美国西雅图儿科研究所、美国埃默里大学人类遗传学院、美国波士顿儿童医院遗传及基因组学部访学。中国医师协会新生儿科医师分会出生缺陷干预专业委员会副主任委员等。从事儿科临床、教学及科研工作30余年，擅长先天性甲状腺功能减低症、苯丙酮尿症、蚕豆病、氨基酸代谢异常、有机酸代谢异常、脂肪酸代谢异常、线粒体病、进行性肌营养不良诊治及新生儿基因筛查遗传咨询、疑难罕见病MDT。",
+      "bio_en": "Head of the Genetic Counseling Platform at the Molecular Genetics Center, Children's Hospital of Zhejiang University School of Medicine, and Head of the MDT for Birth Defects and Rare Diseases. Previously visited Seattle Children's Research Institute, the Department of Human Genetics at Emory University, and the Division of Genetics and Genomics at Boston Children's Hospital in the United States. Vice Chair of the Birth Defect Intervention Professional Committee under the Neonatology Branch of the Chinese Medical Doctor Association, among other roles. Engaged in pediatric clinical work, teaching, and research for over 30 years. Specializes in the diagnosis and treatment of congenital hypothyroidism, phenylketonuria, favism, amino acid metabolism disorders, organic acid metabolism disorders, fatty acid metabolism disorders, mitochondrial diseases, and Duchenne muscular dystrophy, as well as genetic counseling for newborn genetic screening and MDT for complex rare diseases.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_bf44adc2a844",
+      "name_zh": "陈勇主任医师",
+      "name_en": "Chief Physician Chen Yong",
+      "type": "doctor",
+      "hospital_id": "h_a9a1687d88",
+      "bio_zh": "江西省儿童医院神经内科主任、主任医师 中国抗癫痫协会药物治疗专委会委员 中国医院协会罕见病专委会委员 中华医学会儿科学分会儿科神经学组多发性硬化协作组成员 江西省抗癫痫协会常务理事 江西省免疫学会神经免疫分会常务委员 江西省医学会临床药学分会委员 江西省医学会神经病学分会癫痫与脑电图学组副组长 江西省中西医结合学会活血化瘀专业委员会常委委员 江西省儿童医院医院优秀人才培对象、“优秀医生”、“十佳医生”。 擅长小儿神经内科相关疾病的诊断及治疗，如儿童癫痫、儿童神经发育障碍（如抽动症、多动症、语言运动发育落后）、重症肌无力、儿童头痛头晕、脑炎等，尤其对疑难癫痫的脑电图的判断具有较深造诣。",
+      "bio_en": "Director and Chief Physician of the Department of Neurology, Jiangxi Provincial Children's Hospital. Member of the Medication Therapy Committee of the China Anti-Epilepsy Association. Member of the Rare Disease Committee of the Chinese Hospital Association. Member of the Multiple Sclerosis Collaboration Group of the Pediatric Neurology Group, Pediatrics Branch, Chinese Medical Association. Executive Director of the Jiangxi Anti-Epilepsy Association. Standing Committee Member of the Neuroimmunology Branch, Jiangxi Immunological Society. Member of the Clinical Pharmacy Branch, Jiangxi Medical Association. Deputy Head of the Epilepsy and Electroencephalography Group, Neurology Branch, Jiangxi Medical Association. Standing Committee Member of the Blood Activation and Stasis Resolution Committee, Jiangxi Association of Integrative Medicine. Selected as an Outstanding Talent, 'Excellent Doctor', and 'Top Ten Doctor' of Jiangxi Provincial Children's Hospital. Specializes in the diagnosis and treatment of pediatric neurological disorders, including childhood epilepsy, neurodevelopmental disorders (such as tic disorders, ADHD, language and motor developmental delay), myasthenia gravis, paediatric headache and dizziness, encephalitis, etc. Particularly skilled in interpreting electroencephalograms for complex epilepsy cases.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_e30b69d399a1",
+      "name_zh": "虞雄鹰主任医师",
+      "name_en": "Chief Physician Yu Xiongying",
+      "type": "doctor",
+      "hospital_id": "h_a9a1687d88",
+      "bio_zh": "擅长小儿神经内科常见病的诊治。个人对儿童癫痫，神经肌肉，神经遗传代谢性疾病及抽动障碍，ADHD等儿童精神心理性疾患等尤其感兴趣，现任中国抗癫痫协会青年委员会委员，中国抗癫痫协会结节性硬化专业委员会委员、中国优生科学协会遗传学分会委员、中华医学会儿科学分会罕见病学组委员，江西省抗癫痫协会副会长，江西省研究型医院协会神经免疫和感染分会副主任委员，江西省整合医学会神经外科分会功能学组副主任委员，江西省神经科学学会儿童神经病学专业委员会委员兼副秘书长。先后主持或参与厅级以上课题7项，以第一作者发表论文20篇。",
+      "bio_en": "Specialises in the diagnosis and treatment of common paediatric neurological diseases. Has a particular interest in childhood epilepsy, neuromuscular disorders, neurogenetic and metabolic diseases, tic disorders, ADHD, and other paediatric mental and psychological conditions. Currently serves as a member of the Youth Committee of the China Anti-Epilepsy Association, a member of the Tuberous Sclerosis Professional Committee of the China Anti-Epilepsy Association, a member of the Genetics Branch of the China Eugenics Science Association, a member of the Rare Disease Group of the Paediatrics Branch of the Chinese Medical Association, Vice President of the Jiangxi Anti-Epilepsy Association, Vice Chair of the Neuroimmunology and Infection Branch of the Jiangxi Research Hospital Association, Vice Chair of the Functional Group of the Neurosurgery Branch of the Jiangxi Integrated Medicine Association, and Member and Deputy Secretary-General of the Child Neurology Professional Committee of the Jiangxi Neuroscience Society. Has led or participated in 7 projects at or above the departmental level, and has published 20 papers as first author.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_f0b781ac182f",
+      "name_zh": "杨玉主任医师",
+      "name_en": "Chief Physician Yang Yu",
+      "type": "doctor",
+      "hospital_id": "h_a9a1687d88",
+      "bio_zh": "一级主任医师、教授、博士生导师，享受国务院政府特殊津贴专家，现任江西省儿童医院、南昌大学附属儿童医院党委委员、副院长，担任国家小儿内分泌药物GCP基地负责人、江西省儿童遗传代谢性疾病临床医学研究中心主任。兼任中华医学会儿科学分会常务委员、江西省医学会儿科学分会主任委员等学术职务。她于1984年进入江西省儿童医院工作，2005年创建该院首个内分泌科并担任主任。主持国家自然科学基金项目及省级课题60余项，获江西省科技进步奖2项，以第一作者或通讯作者发表中文核心期刊论文80余篇、SCI论文10余篇。领衔组建江西省首个小儿内分泌病房、儿科内分泌遗传代谢学组及国家内分泌临床药物试验基地，率先开展血串联质谱检测等技术应用。曾获全国巾帼建功标兵、江西省五一劳动奖章、江西省“最美科技工作者”等荣誉称号。",
+      "bio_en": "First-level Chief Physician, Professor, and Doctoral Supervisor, recipient of the State Council Special Government Allowance. Currently serves as a member of the Party Committee and Vice President of Jiangxi Provincial Children's Hospital and the Affiliated Children's Hospital of Nanchang University. She is the Director of the National Pediatric Endocrine Drug GCP Base and the Director of the Jiangxi Provincial Clinical Medical Research Center for Children's Genetic Metabolic Diseases. She also holds academic positions including Standing Committee Member of the Pediatrics Branch of the Chinese Medical Association and Chair of the Pediatrics Branch of the Jiangxi Medical Association. She began working at Jiangxi Provincial Children's Hospital in 1984, established the hospital's first Endocrinology Department in 2005, and served as its director. She has led over 60 projects funded by the National Natural Science Foundation of China and provincial-level grants, and has received two Jiangxi Provincial Science and Technology Progress Awards. As first author or corresponding author, she has published more than 80 papers in Chinese core journals and over 10 SCI papers. She pioneered the establishment of Jiangxi Province's first pediatric endocrinology ward, the Pediatric Endocrinology and Genetic Metabolism Group, and the National Endocrine Clinical Drug Trial Base, and was the first to introduce technologies such as blood tandem mass spectrometry. She has been honored with titles including National March 8th Red-Banner Pacesetter, Jiangxi Provincial May 1st Labor Medal, and Jiangxi Province's 'Most Beautiful Scientific and Technical Worker'.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_c80f20617b16",
+      "name_zh": "刘丽主任医师",
+      "name_en": "Chief Physician Liu Li",
+      "type": "doctor",
+      "hospital_id": "h_dac3544bde",
+      "bio_zh": "国家卫健委罕见病防治与保障专家委员会成员；广东省医学会罕见病学分会主任委员；广东省罕见病诊疗协作网专家组组长；广东省罕见病诊疗协作网牵头医院项目负责人；广东省医学会儿科学分会内分泌遗传代谢学组组长。\n从事小儿遗传与内分泌疾病的临床筛查、诊断、治疗、分子遗传病产前诊断和研究工作30余年。承担包括国自然在内的多项国家和地方科研课题，发表包括SCI在内学术论文50余篇，曾获广东省和广州市科技进步奖，广东省和广州市“五一”劳动奖。",
+      "bio_en": "Member of the National Health Commission Expert Committee on Rare Disease Prevention and Treatment; Chair of the Rare Disease Branch of the Guangdong Medical Association; Head of the Expert Group of the Guangdong Rare Disease Diagnosis and Treatment Collaboration Network; Project Lead of the Lead Hospital of the Guangdong Rare Disease Diagnosis and Treatment Collaboration Network; Chair of the Endocrinology, Genetics and Metabolism Group of the Pediatrics Branch of the Guangdong Medical Association.\nEngaged in clinical screening, diagnosis, treatment, prenatal diagnosis of molecular genetic diseases, and research in pediatric genetic and endocrine diseases for over 30 years. Has led multiple national and local research projects, including those funded by the National Natural Science Foundation of China. Published over 50 academic papers, including SCI-indexed articles. Recipient of the Guangdong Provincial and Guangzhou Municipal Science and Technology Progress Awards, as well as the Guangdong Provincial and Guangzhou Municipal May 1st Labor Medals.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_e2e6530fb0e2",
+      "name_zh": "黄永兰主任医师",
+      "name_en": "Chief Physician Huang Yonglan",
+      "type": "doctor",
+      "hospital_id": "h_dac3544bde",
+      "bio_zh": "医学博士，广州医学院硕士导师。从事儿科临床工作25年，1990年获同济医科大学儿科内分泌、遗传代谢专业硕士学位，2006年获中山大学儿科血液专业博士学位，2004年晋升儿科主任医师。先后在同济医科大学、武汉大学和中山大学学习和工作，多次参加亚太地区儿科内分泌代谢专业学习班和学术会议，2008年参加亚太地区溶酶体贮积病研讨会。2003年~2008年主要从事儿科常见血液病和造血干细胞移植临床和科研工作。擅长儿童内分泌疾病、遗传性疾病、血液系统疾病、矮小症、性早熟、肥胖、糖尿病、甲状腺疾病、小儿白血病、再生障碍性贫血",
+      "bio_en": "Doctor of Medicine, Master's supervisor at Guangzhou Medical University. Engaged in paediatric clinical work for 25 years. In 1990, obtained a Master's degree in Paediatric Endocrinology, Genetics and Metabolic Diseases from Tongji Medical University. In 2006, received a Doctorate in Paediatric Haematology from Sun Yat-sen University. Promoted to Chief Paediatric Physician in 2004. Studied and worked at Tongji Medical University, Wuhan University, and Sun Yat-sen University. Participated multiple times in Asia-Pacific paediatric endocrinology and metabolism training courses and academic conferences. In 2008, attended the Asia-Pacific Lysosomal Storage Disease Symposium. From 2003 to 2008, primarily engaged in clinical and research work on common paediatric haematological diseases and haematopoietic stem cell transplantation. Specialises in paediatric endocrine diseases, genetic disorders, haematological diseases, short stature, precocious puberty, obesity, diabetes, thyroid diseases, childhood leukaemia, and aplastic anaemia.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_0445121e8aed",
+      "name_zh": "梁颖茵副主任医师",
+      "name_en": "Deputy Chief Physician Liang Yingyin",
+      "type": "doctor",
+      "hospital_id": "h_77412d13e5",
+      "bio_zh": "广州中山大学附属第一医院神经一科工作，为科室业务骨干。2000年毕业于中山大学医学院（原中山医科大学）临床医学系，后一直在中山大学附属第一医院神经科工作。2006年取得临床神经病学硕士学位，2014年获得博士学位，研究方向为神经肌肉病及肌营养不良。硕士课题是“试用基因缺陷、蛋白空间结构改变浅析DMD发病机制”。工作期间对进行性肌营养不良症等神经遗传性疾病的发病机制及临床诊断治疗作了系统研究，曾于2013年赴北京协和医院进修电生理技术。已掌握电脑操作技巧、生物信息软件应用、网络数据库应用、蛋白计算机三维重构及功能预测等生物信息学技术。发表多篇论文。擅长神经内科疾病的诊治，尤其是神经肌肉病、神经遗传病、罕见病、眩晕等疾病的诊断和治疗。",
+      "bio_en": "Works in the First Department of Neurology at the First Affiliated Hospital of Sun Yat-sen University, Guangzhou, as a key clinical member. Graduated from the Clinical Medicine Department of Sun Yat-sen University Medical College (formerly Sun Yat-sen University of Medical Sciences) in 2000, and has since been working in the Neurology Department of the First Affiliated Hospital of Sun Yat-sen University. Obtained a Master's degree in Clinical Neurology in 2006 and a Doctorate in 2014, with research focused on neuromuscular diseases and muscular dystrophy. The Master's thesis was titled 'Preliminary Analysis of DMD Pathogenesis Using Gene Defects and Protein Spatial Structure Changes.' During work, conducted systematic research on the pathogenesis, clinical diagnosis, and treatment of progressive muscular dystrophy and other neurogenetic diseases. In 2013, went to Peking Union Medical College Hospital for further training in electrophysiological techniques. Has mastered computer operation skills, bioinformatics software applications, network database applications, protein three-dimensional reconstruction and functional prediction, and other bioinformatics techniques. Published multiple papers. Specializes in the diagnosis and treatment of neurological diseases, particularly neuromuscular diseases, neurogenetic diseases, rare diseases, and vertigo.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_3649fbc32c1b",
+      "name_zh": "黄海威主任医师",
+      "name_en": "Chief Physician Huang Haiwei",
+      "type": "doctor",
+      "hospital_id": "h_77412d13e5",
+      "bio_zh": "长期工作在医疗第一线，有30余年的临床工作经验，对神经科疑难疾病的诊治和危重病人的抢救积累了丰富经验，尤其擅长脑血管疾病、中枢神经系统感染性疾病、中毒与放射性脑病、脊髓病及神经系统罕见病的诊治，并带领团队致力于常见症状如头晕、眩晕、平衡障碍、功能性神经症状等的诊治和康复。多次参与省医疗队的外派抢救工作。先后承担国家及省市级科研项目10余项，在国内外发表科研论文近百篇，参与编写《临床神经病学》及《脑卒中》等多本专著，获卫生部及省科技厅科研成果奖多项。",
+      "bio_en": "Has worked on the front line of medical care for over 30 years, accumulating rich clinical experience in the diagnosis and treatment of difficult neurological diseases and the rescue of critically ill patients. Particularly skilled in diagnosing and managing cerebrovascular diseases, central nervous system infections, poisoning and radiation-induced encephalopathy, myelopathy, and rare neurological disorders. Leads the team in the diagnosis, treatment, and rehabilitation of common symptoms such as dizziness, vertigo, balance disorders, and functional neurological symptoms. Has participated in multiple rescue missions dispatched by provincial medical teams. Has led over 10 national, provincial, and municipal research projects, published nearly 100 scientific papers domestically and internationally, co-authored several monographs including 'Clinical Neurology' and 'Stroke', and received multiple scientific research achievement awards from the Ministry of Health and the Provincial Department of Science and Technology.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_07eb0c0d3c84",
+      "name_zh": "陈剑锋主任医师",
+      "name_en": "Chief Physician Chen Jianfeng",
+      "type": "doctor",
+      "hospital_id": "h_a11ad42b21",
+      "bio_zh": "临床医学博士，南方医科大学珠江医院儿科主任医师，中国医药教育协会医学模拟教学专委会委员。陈剑锋在临床中发现部分儿童支原体肺炎患者使用阿奇霉素治疗无效，其耐药现象与抗生素滥用存在相关性。\n曾在香港大学玛丽医院儿童血液免疫科进修，在美国加州Loma Linda大学从事自身免疫性糖尿病研究工作三年。现任南方医科大学珠江医院儿科主任医师。",
+      "bio_en": "Doctor of Clinical Medicine, Chief Physician in Pediatrics at Zhujiang Hospital of Southern Medical University, and member of the Medical Simulation Teaching Committee of the China Medical Education Association. Chen Jianfeng discovered in clinical practice that some children with Mycoplasma pneumoniae pneumonia do not respond to azithromycin treatment, and this drug resistance is correlated with antibiotic overuse.\nHe previously trained in the Pediatric Hematology and Immunology Department at Queen Mary Hospital, University of Hong Kong, and conducted three years of research on autoimmune diabetes at Loma Linda University in California, USA. He currently serves as Chief Physician in Pediatrics at Zhujiang Hospital of Southern Medical University.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_aad800fdf2b4",
+      "name_zh": "黄晓利主任医师",
+      "name_en": "Chief Physician Huang Xiaoli",
+      "type": "doctor",
+      "hospital_id": "h_0d8fe54255",
+      "bio_zh": "2007年毕业于广州中医药大学，取得中医儿科学硕士学位。2015年曾到北京儿童医院PICU、神经内科进修学习1年。2016年考取了广州中医药大学博士研究生，2021年获得博士学位。\n学术成就：主持课题2项，发表论文10余篇，实用性专利1项。\n学术兼职：中国中西医结合学会第八届儿科专业委员会青年委员；第一届中国中药协会儿童健康与药物研究专业委员会委员。",
+      "bio_en": "Graduated from Guangzhou University of Chinese Medicine in 2007 with a Master's degree in Paediatrics of Chinese Medicine. In 2015, she undertook a one-year advanced study at the PICU and Neurology Department of Beijing Children's Hospital. In 2016, she was admitted as a doctoral candidate at Guangzhou University of Chinese Medicine and obtained her PhD in 2021.\nAcademic achievements: Led 2 research projects, published over 10 papers, and holds 1 utility patent.\nAcademic affiliations: Youth member of the 8th Paediatric Professional Committee of the Chinese Association of Integrative Medicine; member of the 1st Professional Committee on Child Health and Drug Research of the China Association of Traditional Chinese Medicine.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_065001773870",
+      "name_zh": "罕见病诊治中心",
+      "name_en": "Rare Disease Diagnosis and Treatment Centre",
+      "type": "team",
+      "hospital_id": "h_9c2eaa5a73",
+      "bio_zh": "为有效整合与调度医疗资源，体现分级诊疗下的医院定位，最大限度地发挥区域疑难重症诊疗中心作用，充分利用医院优质资源，保障疑难、复杂、危重、罕见病患者诊疗服务，2022年6月，门诊部成立罕见病中心实行科级建制，中心下设疑难病会诊中心及罕见病诊疗与研究中心。疑难病会诊中心主要开展多学科联合门诊(MDT)、疑难疾病会诊、重大阳性检查结果及重大疾病绿色通道等业务；罕见病诊疗与研究中心通过集约患者、集约专家、集约科研平台等方式，负责协调来院罕见病患者的诊治以及资料收集等工作，开展罕见病诊治。",
+      "bio_en": "To effectively integrate and allocate medical resources, reflect the hospital's role under tiered diagnosis and treatment, maximize its function as a regional center for complex and severe diseases, fully utilize the hospital's high-quality resources, and ensure diagnostic and treatment services for patients with complex, difficult, critical, and rare diseases, in June 2022, the Outpatient Department established the Rare Disease Center at the departmental level. The center includes the Complex Disease Consultation Center and the Rare Disease Diagnosis, Treatment, and Research Center. The Complex Disease Consultation Center primarily conducts multidisciplinary joint clinics (MDT), consultations for complex diseases, and green channels for major positive test results and serious conditions. The Rare Disease Diagnosis, Treatment, and Research Center coordinates the diagnosis, treatment, and data collection for rare disease patients visiting the hospital by centralizing patients, experts, and research platforms, and carries out rare disease diagnosis and treatment.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_dae53e1b8ce8",
+      "name_zh": "俞丹主任医师",
+      "name_en": "Chief Physician Yu Dan",
+      "type": "doctor",
+      "hospital_id": "h_d6865850e7",
+      "bio_zh": "四川大学华西二院医学遗传科副主任，儿童遗传病诊治中心主任。现任中华医学会儿科分会遗传代谢内分泌学组委员、中华医学会儿科分会发育行为学组青年委员、中国研究型医院儿科学专业委员会委员、四川省预防医学会儿童遗传代谢内分泌及罕见病防治分会主任委员、四川省医师协会罕见病专委会副主任委员、四川省医学会医学遗传专委会委员、四川省癫痫学会理事、四川省全国出生缺陷人才培训项目遗传病诊治专业组长等任职。四川省学术和技术带头人后备人选，四川卫生厅学术带头人后备人选。\n曾在美国辛辛那提儿童医院，波士顿儿童医院，贝勒医学院及日本访问学习。回国后继续从事儿童神经系统疾病，遗传代谢性疾病，生长发育障碍等疾病的诊断，治疗。\n2次入选四川大学青年骨干教师奖励计划，并获四川大学华西临床医学院教学先进个人。负责国家青年自然科学基金，国际合作课题，四川省科技厅，四川省卫健委项目、四川省学术和技术带头人培养基金，中国抗癫痫协会癫痫科研基金等科研项目。先后在国内外杂志发表论文50余篇 。",
+      "bio_en": "Deputy Director of the Department of Medical Genetics and Director of the Center for Diagnosis and Treatment of Childhood Genetic Diseases at West China Second University Hospital, Sichuan University. Currently serves as a member of the Genetics, Metabolism, and Endocrinology Group of the Pediatrics Branch of the Chinese Medical Association, a youth member of the Developmental and Behavioral Group of the Pediatrics Branch of the Chinese Medical Association, a member of the Pediatrics Committee of the Chinese Research Hospital Association, Chair of the Committee for Prevention and Treatment of Childhood Genetic, Metabolic, Endocrine and Rare Diseases of the Sichuan Preventive Medicine Association, Vice Chair of the Rare Diseases Committee of the Sichuan Medical Doctor Association, member of the Medical Genetics Committee of the Sichuan Medical Association, Director of the Sichuan Epilepsy Society, and Lead of the Genetic Disease Diagnosis and Treatment Specialty Group of the Sichuan National Birth Defect Talent Training Program. He is a reserve candidate for the Sichuan Provincial Academic and Technical Leaders and a reserve candidate for the Academic Leaders of the Sichuan Provincial Health Department.\nHe has previously studied at Cincinnati Children's Hospital, Boston Children's Hospital, Baylor College of Medicine in the United States, and in Japan. After returning to China, he has continued to focus on the diagnosis and treatment of neurological diseases, genetic metabolic diseases, and growth and development disorders in children.\nHe has been selected twice for the Young Teacher Award Program of Sichuan University and has received the Teaching Advanced Individual Award from West China Clinical Medical College of Sichuan University. He has led research projects including the National Natural Science Foundation for Young Scientists, international cooperation projects, projects from the Sichuan Provincial Department of Science and Technology, the Sichuan Provincial Health Commission, the Sichuan Provincial Academic and Technical Leaders Training Fund, and the Epilepsy Research Fund of the China Anti-Epilepsy Association. He has published over 50 papers in domestic and international journals.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_72dc66e61711",
+      "name_zh": "吴瑾主任医师",
+      "name_en": "Chief Physician Wu Jin",
+      "type": "doctor",
+      "hospital_id": "h_d6865850e7",
+      "bio_zh": "小儿遗传代谢内分泌科主任，四川省卫生健康委学术技术带头人，四川省学术和技术带头人后备人选，中华医学会儿科学分会罕见病学组委员，中国医师协会儿童内分泌代谢遗传学组委员，中国医院协会罕见病专委会常务委员，四川省医学会儿科学专委会罕见病学组组长，四川省妇幼保健协会遗传代谢内分泌专委会副主任委员，四川省性学会性腺轴与生殖专委会副主任委员，四川省医学会内分泌及糖尿病专委会委员等。先后赴美国宾夕法尼亚大学费城儿童医院及复旦大学儿科医院进修学习。主持国家自然科学基金、四川省科技厅等多项科研项目。",
+      "bio_en": "Director of the Department of Pediatric Genetics, Metabolism, and Endocrinology; Academic and Technical Leader of the Sichuan Provincial Health Commission; Reserve Candidate for Academic and Technical Leader of Sichuan Province; Member of the Rare Disease Group, Pediatrics Branch, Chinese Medical Association; Member of the Pediatric Endocrinology, Metabolism, and Genetics Group, Chinese Medical Doctor Association; Standing Committee Member of the Rare Disease Special Committee, Chinese Hospital Association; Chair of the Rare Disease Group, Pediatrics Special Committee, Sichuan Medical Association; Deputy Director of the Genetics, Metabolism, and Endocrinology Special Committee, Sichuan Maternal and Child Health Association; Deputy Director of the Gonadal Axis and Reproduction Special Committee, Sichuan Sexology Association; Member of the Endocrinology and Diabetes Special Committee, Sichuan Medical Association, among others. She has previously studied at the Children's Hospital of Philadelphia, University of Pennsylvania, USA, and the Pediatric Hospital of Fudan University. She has led multiple research projects funded by the National Natural Science Foundation of China and the Sichuan Provincial Department of Science and Technology.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_d4875c89d73e",
+      "name_zh": "肖农主任医师",
+      "name_en": "Chief Physician Xiao Nong",
+      "type": "doctor",
+      "hospital_id": "h_c9af20b5c8",
+      "bio_zh": "重庆医科大学附属儿童医院康复中心主任，二级教授，博士生导师。一直致力于儿科神经及神经康复临床、教学及科研工作。任中华医学会儿科分会康复医学组组长、中国康复学会常务理事、教育部学位中心评审专家。主持国家级及省部级科研课题二十余项，获国家实用新型发明专利三项，在国内外权威期刊发表论文150余篇，主编著作3部，执笔编写专家共识和行业指南17篇。2022年获中国康复医学会‘最美康复科技工作者’称号。",
+      "bio_en": "Director of the Rehabilitation Center at the Children's Hospital of Chongqing Medical University, Level 2 Professor, and Doctoral Supervisor. He has long been dedicated to clinical work, teaching, and research in paediatric neurology and neurological rehabilitation. He serves as the Head of the Rehabilitation Medicine Group of the Chinese Medical Association's Paediatric Branch, Executive Director of the Chinese Rehabilitation Society, and Review Expert for the Degree Center of the Ministry of Education. He has led over 20 national and provincial-level research projects, obtained three national utility model patents, published more than 150 papers in prestigious domestic and international journals, authored three books, and drafted 17 expert consensus statements and industry guidelines. In 2022, he was awarded the title of 'Most Beautiful Rehabilitation Science and Technology Worker' by the Chinese Rehabilitation Medicine Association.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_7e4e326b0f74",
+      "name_zh": "曹洁副主任医师",
+      "name_en": "Deputy Chief Physician Cao Jie",
+      "type": "doctor",
+      "hospital_id": "h_c9af20b5c8",
+      "bio_zh": "副主任医师，副教授，医学博士，现任特需病房副主任，毕业于重庆医科大学，一直从事小儿内科临床工作，主要擅长于小儿神经系统疾病的诊治及研究。科研成果先后获得省部级科研项目多项。发表论文20多篇。曾有过收治WHS患者的经历。",
+      "bio_en": "Associate Chief Physician, Associate Professor, Doctor of Medicine, currently Deputy Director of the Special Needs Ward. Graduated from Chongqing Medical University and has been engaged in clinical paediatric internal medicine, specialising in the diagnosis, treatment and research of paediatric neurological disorders. Has led several provincial and ministerial-level scientific research projects and published over 20 papers. Has experience in treating patients with WHS.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_0ac580083680",
+      "name_zh": "刘小红主任医师",
+      "name_en": "Chief Physician Liu Xiaohong",
+      "type": "doctor",
+      "hospital_id": "h_fc1e975005",
+      "bio_zh": "教授、主任医师、博士研究生导师、儿科学科带头人。1986年毕业于西安医科大学（现西安交通大学医学部），1994年获该校硕士学位，2013年获西安交通大学博士学位。\n长期从事儿童神经系统疾病、认知心理精神疾病防治及脑发育评价技术研究，主持国家自然科学基金及省部级科研项目8项。截至2025年2月，发表论文88篇，出版著作6部（主编2部），获陕西省科技进步奖及教学成果二等奖。构建\"以胜任力培养为导向的儿科学教学新体系\"，建立立体化教学资源与实践平台，主持教改项目5项，培养研究生41名。现任中国优生科学协会常务理事、陕西省儿科专业委员会副主任委员。",
+      "bio_en": "Professor, Chief Physician, Doctoral Supervisor, and Academic Leader in Paediatrics. Graduated from Xi’an Medical University (now Xi’an Jiaotong University Health Science Center) in 1986, obtained a Master’s degree from the same university in 1994, and a Doctorate from Xi’an Jiaotong University in 2013.\n\nHas long been engaged in research on paediatric neurological disorders, cognitive and psychological mental health prevention and treatment, and brain development assessment techniques. Has led 8 projects funded by the National Natural Science Foundation of China and provincial/ministerial research programmes. As of February 2025, has published 88 papers and 6 books (2 as editor-in-chief), and has received the Shaanxi Provincial Science and Technology Progress Award and a second prize for teaching achievements. Developed a ‘competency-oriented new paediatric teaching system’, established a comprehensive teaching resource and practice platform, led 5 educational reform projects, and supervised 41 postgraduate students. Currently serves as Executive Director of the China Association for Birth Defects Prevention and Control, and Vice Chair of the Shaanxi Paediatric Special Committee.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_903b7dd3bf9b",
+      "name_zh": "史瑞明主任医师",
+      "name_en": "Chief Physician Shi Ruiming",
+      "type": "doctor",
+      "hospital_id": "h_fc1e975005",
+      "bio_zh": "博士，硕士研究生导师，副主任医师。陕西省儿科学会委员，西安市儿科学会委员。于1998年毕业于西安医科大学，一直从事儿科医教研工作。承担留学生、研究生、本科生的儿科教学工作。注重教学方法，多次参加院、校级授课比赛并获奖。熟练掌握儿科常见、多发病的诊治，儿科急危重症的救治工作。专长于儿科呼吸系统疾病、免疫紊乱、儿童慢性咳嗽、儿童哮喘、儿童消化及神经系统常见病的诊治，及家族遗传性疾病基因诊断。主持国家自然科学基金1项，参与国家自然科学基金6项，主持及参与省级和院校基金10余项。获得陕西省科技进步三等奖1次。发表科研论文40余篇。",
+      "bio_en": "Doctor, master's supervisor, associate chief physician. Member of the Shaanxi Provincial Pediatric Society and the Xi'an Pediatric Society. Graduated from Xi'an Medical University in 1998 and has been engaged in pediatric clinical, teaching, and research work ever since. Responsible for pediatric teaching of international students, postgraduates, and undergraduates. Emphasizes teaching methods, having participated in and won awards in hospital- and university-level teaching competitions multiple times. Proficient in the diagnosis and treatment of common and frequently occurring pediatric diseases, as well as the management of acute and critical pediatric conditions. Specializes in pediatric respiratory diseases, immune disorders, chronic cough in children, childhood asthma, common pediatric digestive and neurological disorders, and genetic diagnosis of familial hereditary diseases. Led one National Natural Science Foundation project, participated in six such projects, and led or participated in over ten provincial and institutional foundation projects. Received one third prize for Shaanxi Provincial Science and Technology Progress. Published over 40 research papers.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_9f6a7f8924a1",
+      "name_zh": "侯凌主任医师",
+      "name_en": "Chief Physician Hou Ling",
+      "type": "doctor",
+      "hospital_id": "h_866e5fcc1f",
+      "bio_zh": "医学博士，主任医师，硕士研究生导师，儿童遗传内分泌呼吸科副主任。现任中华医学会儿科临床药理学组委员，中华医学会儿科学分会青春期医学委员会委员，中国医师协会儿童遗传病专委会委员，中国医药教育协会临床用药评价专业委员会兼儿童用药评价分会委员。1992年毕业于同济医科大学儿科系，曾在美国匹兹堡儿童医院深造学习一年余，从事儿科临床工作近30年，具有丰富的临床经验。主持国家重大专项子课题、国家级课题和湖北省自然科学基金多项，具体负责世界糖尿病基金会合作项目和全国多中心药物临床研究多项。在国内外权威核心杂志上发表多篇学术论文，参编多部儿科专著。\n擅长儿童内分泌疾病、遗传代谢病、生长落后、糖尿病、性早熟、甲状腺疾病、肥胖症、肾上腺疾病、性发育异常、尿崩症、染色体疾病、骨骼发育异常。",
+      "bio_en": "Doctor of Medicine, Chief Physician, Master's Supervisor, Deputy Director of the Department of Pediatric Genetic Endocrinology and Respiratory Medicine. Currently serves as a member of the Clinical Pharmacology Group of the Chinese Medical Association's Pediatric Branch, a member of the Adolescent Medicine Committee of the Chinese Medical Association's Pediatric Branch, a member of the Chinese Medical Doctor Association's Committee on Pediatric Genetic Diseases, and a member of the Clinical Medication Evaluation Professional Committee and the Pediatric Medication Evaluation Subcommittee of the China Medical Education Association. Graduated from the Pediatric Department of Tongji Medical University in 1992, and studied for over a year at the Children's Hospital of Pittsburgh in the United States. Has been engaged in pediatric clinical work for nearly 30 years, with extensive clinical experience. Has led multiple national major special sub-projects, national-level projects, and Hubei Provincial Natural Science Foundation projects, and has been specifically responsible for several collaborative projects with the World Diabetes Foundation and multi-center clinical drug studies nationwide. Has published numerous academic papers in authoritative core journals both domestically and internationally, and has contributed to the compilation of several pediatric monographs.\nSpecializes in pediatric endocrine diseases, genetic metabolic diseases, growth retardation, diabetes, precocious puberty, thyroid diseases, obesity, adrenal diseases, disorders of sexual development, diabetes insipidus, chromosomal disorders, and skeletal dysplasia.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_f043d2713ab1",
+      "name_zh": "王媛主任医师",
+      "name_en": "Chief Physician Wang Yuan",
+      "type": "doctor",
+      "hospital_id": "h_020af6e353",
+      "bio_zh": "神经内科主任，1990年毕业于河南医科大学医疗系。毕业后从事儿内科专业，2000年开始从事小儿神经内科专业，抗癫痫协会脑电图与神经电生理分会委员。2002年曾在北京大学第一医院进修学习，2017年在德国柏林访问学习。擅长小儿神经内科癫痫、抽动障碍、中枢神经系统感染性疾病及脱髓鞘脑病等疾病的诊治。现任中国妇幼保健协会儿童疾病和保健分会儿童神经疾病与保健学组委员、河南省抗癫痫协会常务委员。\n擅长癫痫、抽动障碍、中枢神经系统感染性疾病、脱髓鞘脑病、神经遗传代谢病。",
+      "bio_en": "Director of the Department of Neurology. Graduated from the Medical Faculty of Henan Medical University in 1990. After graduation, he worked in paediatric internal medicine, and since 2000 has specialised in paediatric neurology. He is a member of the Electroencephalography and Neuroelectrophysiology Branch of the Anti-Epilepsy Association. In 2002, he studied at Peking University First Hospital, and in 2017, he visited Berlin, Germany for study. He is skilled in diagnosing and treating epilepsy, tic disorders, central nervous system infectious diseases, and demyelinating encephalopathy in paediatric neurology. He currently serves as a member of the Child Neurological Diseases and Health Group of the Children's Diseases and Health Branch of the China Maternal and Child Health Association, and as a standing committee member of the Henan Anti-Epilepsy Association.\nSpecialises in epilepsy, tic disorders, central nervous system infectious diseases, demyelinating encephalopathy, and neurogenetic metabolic diseases.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_eab27fc340f4",
+      "name_zh": "陈晓轶副主任医师",
+      "name_en": "Deputy Chief Physician Chen Xiaoyi",
+      "type": "doctor",
+      "hospital_id": "h_020af6e353",
+      "bio_zh": "硕士研究生，副主任医师，2010年硕士研究生毕业于重医医科大学，河南省医学会抗癫痫分会第一届癫痫中心建设委员会委员,河南省医学科普学会儿童癫痫专业委员会委员,中国抗癫痫协会会员.2017年获得中国抗癫痫协会脑电图中级证书，2018年3月至8月至上海复旦大学附属儿科医院神经内科专修半年，2019年3月作为访问学者至首都医科大学附属儿童医院学习1月，目前共发表文章10余篇，参与省级以上科研2项，擅长小儿癫痫、化脓性脑膜炎、病毒性脑炎、变态反应性脑炎、神经遗传性代谢病、神经变性病、中枢神经系统炎性脱髓鞘病、神经肌肉病诊断及治疗，擅长小儿脑电图、神经肌电图判读，熟练掌握小儿神经系统疾病影像学特征。\n擅长颅内感染、化脓性脑膜炎、自身免疫性脑炎、流行性脑脊髓膜炎、脑炎后遗症、小儿癫痫、儿童失神癫痫、症状性癫痫综合征。",
+      "bio_en": "Master's degree candidate, Associate Chief Physician. Graduated with a master's degree from Chongqing Medical University in 2010. Member of the First Epilepsy Centre Construction Committee of the Anti-Epilepsy Branch of Henan Medical Association, member of the Children's Epilepsy Professional Committee of Henan Medical Science Popularization Association, and member of the China Anti-Epilepsy Association. Obtained the intermediate certificate in electroencephalography from the China Anti-Epilepsy Association in 2017. From March to August 2018, undertook a six-month specialist training in the Neurology Department of Children's Hospital of Fudan University, Shanghai. In March 2019, studied as a visiting scholar at Beijing Children's Hospital, Capital Medical University for one month. Has published over 10 articles and participated in more than two provincial-level or higher research projects. Specialises in the diagnosis and treatment of paediatric epilepsy, purulent meningitis, viral encephalitis, allergic encephalitis, neurogenetic metabolic diseases, neurodegenerative diseases, central nervous system inflammatory demyelinating diseases, and neuromuscular diseases. Proficient in interpreting paediatric electroencephalography and neuromuscular electromyography, and skilled in understanding imaging features of paediatric nervous system diseases. Expertise includes intracranial infections, purulent meningitis, autoimmune encephalitis, epidemic cerebrospinal meningitis, post-encephalitis sequelae, paediatric epilepsy, childhood absence epilepsy, and symptomatic epilepsy syndromes.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_eab33c3abc16",
+      "name_zh": "彭镜主任医师",
+      "name_en": "Chief Physician Peng Jing",
+      "type": "doctor",
+      "hospital_id": "h_cd9f685b76",
+      "bio_zh": "教授，主任医师，博士生导师。湘雅医院儿科主任兼任小儿神经专科主任，中华医学会儿科分会委员、中华医学会儿科分会神经学组副组长，中国医师协会儿科分会委员、中国抗癫痫协会结节性硬化专业委员会副组长，湖南省抗癫痫协会侯任会长，湖南省医师协会儿科专业委员会副会长、脑发育与行为学组组长，湖南省医学会儿科专业委员会委员兼秘书、罕见病学组组长、湖南省儿童智力障碍研究中心副主任。湖南省高层次卫生人才“225”工程湖南省医学学科带头人培养对象。2011年获得“ASEPA-ASNA-CAAE（亚洲癫痫学会和亚洲神经科）”脑电图医师资格，湖南省首个全国脑电图高级资质获得者；曾获中南大学十佳授课教师、陈新民优秀教师、湘雅医院十佳医生等荣誉。\n先后在美国霍普金斯大学、芝加哥大学儿童医院、洛杉矶儿童医院接受临床培训，长期工作在临床一线，致力于儿童药物难治性癫痫、儿童代谢病及儿童神经遗传病的诊治。主持国家自然科学基金4项，以第一作者或通信作者发表文章近百篇，主编专著2部、参编10部。以第一完成人获得湖南省科学技术进步一等奖1项和湖南医学科技一等奖2项。",
+      "bio_en": "Professor, Chief Physician, Doctoral Supervisor. Director of the Department of Pediatrics and concurrently Director of the Pediatric Neurology Division at Xiangya Hospital. Member of the Chinese Medical Association Pediatrics Branch, Deputy Head of the Neurology Group of the Chinese Medical Association Pediatrics Branch, Member of the Chinese Medical Doctor Association Pediatrics Branch, Deputy Head of the Tuberous Sclerosis Professional Committee of the China Anti-Epilepsy Association, President-Elect of the Hunan Anti-Epilepsy Association, Vice President of the Hunan Medical Doctor Association Pediatrics Professional Committee, Head of the Brain Development and Behavioral Group, Member and Secretary of the Hunan Medical Association Pediatrics Professional Committee, Head of the Rare Disease Group, and Deputy Director of the Hunan Provincial Research Center for Childhood Intellectual Disability. Designated as a training candidate for medical discipline leaders under the Hunan Provincial High-Level Health Talent '225' Project. In 2011, obtained EEG physician qualification from 'ASEPA-ASNA-CAAE' (Asian Society of Epilepsy and Asian Neurology), becoming the first holder of the national advanced EEG qualification in Hunan Province. Has received honors such as Top Ten Lecturers of Central South University, Chen Xinmin Excellent Teacher, and Top Ten Doctors of Xiangya Hospital. Has undergone clinical training at Johns Hopkins University, University of Chicago Children's Hospital, and Los Angeles Children's Hospital in the United States. Has long been working on the clinical front line, dedicated to the diagnosis and treatment of drug-resistant epilepsy in children, pediatric metabolic diseases, and pediatric neurogenetic disorders. Has led four projects funded by the National Natural Science Foundation of China, published nearly 100 papers as first author or corresponding author, edited 2 monographs, and contributed to 10 others. As the primary contributor, has received one First Prize of Hunan Provincial Science and Technology Progress Award and two First Prizes of Hunan Medical Science and Technology Award.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    },
+    {
+      "id": "e_012985d56d02",
+      "name_zh": "尹飞主任医师",
+      "name_en": "Chief Physician Yin Fei",
+      "type": "doctor",
+      "hospital_id": "h_cd9f685b76",
+      "bio_zh": "教授，博士生导师。擅长小儿神经系统疾病及儿科领域的疑难杂症的诊治，包括小儿中枢神经系统感染性疾病、脑水肿、小儿智力障碍、小儿癫痫、遗传代谢性疾病、先天性结核病、先天性弓形虫感染所致的婴儿痉挛症、肺间质蛋白沉积症、肺间质纤维化、儿童周期性发热综合症、全身播散性真菌病、遗传性脑白质病等多种染色体病和基因组病。\n先后参与国家重大研究计划（973）项目1项，国家重大研究计划课题1项，承担国家自然科学基金、国家教育部博士点基金等省部级课题10多项，在国内外权威刊物发表科研论文100多篇，其中SCI60多篇，主编儿科学专著5本，获得湖南省科学技术进步一等奖1次，二等奖2次。\n擅长小儿神经系统疾病及儿科领域的疑难杂症的诊治，包括小儿中枢神经系统感染性疾病、脑水肿、小儿脑炎、小儿脑膜炎、小儿智力障碍、小儿癫痫、遗传代谢性疾病、先天性结核病、先天性弓形虫感染所致的婴儿痉挛症、肺间质蛋白沉积症、肺间质纤维化、儿童周期性发热综合症、全身播散性真菌病、遗传性脑白质病等多种染色体病和基因组病。",
+      "bio_en": "Professor, doctoral supervisor. Specialises in the diagnosis and treatment of paediatric neurological disorders and complex疑难 cases in paediatrics, including central nervous system infectious diseases in children, cerebral oedema, intellectual disability in children, childhood epilepsy, genetic metabolic diseases, congenital tuberculosis, infantile spasms caused by congenital toxoplasma infection, pulmonary interstitial proteinosis, pulmonary interstitial fibrosis, periodic fever syndrome in children, disseminated fungal infection, genetic leukodystrophy, and various chromosomal and genomic disorders.\nHas participated in one National Major Research Plan (973) project and one National Major Research Plan topic, led more than 10 provincial and ministerial-level projects including the National Natural Science Foundation of China and the Doctoral Fund of the Ministry of Education, published over 100 research papers in authoritative domestic and international journals (including more than 60 SCI-indexed papers), edited 5 paediatric monographs, and received one first prize and two second prizes of the Hunan Provincial Science and Technology Progress Award.\nSpecialises in the diagnosis and treatment of paediatric neurological disorders and complex疑难 cases in paediatrics, including central nervous system infectious diseases in children, cerebral oedema, childhood encephalitis, childhood meningitis, intellectual disability in children, childhood epilepsy, genetic metabolic diseases, congenital tuberculosis, infantile spasms caused by congenital toxoplasma infection, pulmonary interstitial proteinosis, pulmonary interstitial fibrosis, periodic fever syndrome in children, disseminated fungal infection, genetic leukodystrophy, and various chromosomal and genomic disorders.",
+      "disease_ids": [
+        "ORPHA:280"
+      ]
+    }
+  ],
+  "summary_zh": "一种由 4 号染色体短臂缺失引起的罕见遗传病，常伴生长发育迟缓、特殊面容、癫痫与多系统受累。本页提供面向患者的就医导览与相关专家信息，不构成诊疗建议。",
+  "summary_en": "A rare genetic condition caused by a deletion on the short arm of chromosome 4, often featuring growth delay, characteristic facial features, epilepsy, and multi-system involvement. This page offers patient-oriented care navigation and specialist information — not medical advice.",
+  "care_tips_zh": [
+    "优先考虑设有罕见病门诊 / 遗传代谢 / 发育儿科 / 儿童神经 / 康复的医疗机构。",
+    "可携带已有的基因检测报告、生长发育记录与癫痫相关检查，便于多学科评估。",
+    "就近排序按省市估算，实际就诊请以医院官方预约渠道为准。"
+  ],
+  "care_tips_en": [
+    "Prioritise centres with rare-disease clinics, genetics / metabolic medicine, developmental paediatrics, paediatric neurology, or rehabilitation.",
+    "Bring existing genetic reports, growth records, and epilepsy-related tests to support multidisciplinary assessment.",
+    "Nearest ranking is estimated by province/city centre — always confirm booking via official hospital channels."
+  ],
+  "specialty_keywords_zh": [
+    "罕见病",
+    "遗传代谢",
+    "发育儿科",
+    "儿童神经",
+    "康复"
+  ],
+  "specialty_keywords_en": [
+    "Rare disease",
+    "Genetics / metabolism",
+    "Developmental paediatrics",
+    "Paediatric neurology",
+    "Rehabilitation"
+  ]
+}

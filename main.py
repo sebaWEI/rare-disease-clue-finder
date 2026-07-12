@@ -9,6 +9,7 @@ rare-disease clue finding.
 Endpoints
 ---------
 GET  /api/health          — health-check + graph statistics
+GET  /api/guides/{id}     — care-guide experts for a disease (WHS first)
 POST /api/predict         — given a list of HPO IDs, return top-5 diseases
        with explainable matched paths
 
@@ -27,6 +28,7 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import unquote
 
 import faiss
 import networkx as nx
@@ -81,6 +83,10 @@ LAYERSON_DICT_PATH = os.path.join(DATA_DIR, "layperson_dict.json")
 LAYERSON_DICT_ZH_PATH = os.path.join(DATA_DIR, "layperson_dict_zh.json")
 HPO_NAMES_ZH_PATH = os.path.join(DATA_DIR, "hpo_names_zh.json")
 DISEASE_DICT_ZH_PATH = os.path.join(DATA_DIR, "disease_names_zh.json")
+GUIDES_DIR = os.path.join(_BASE_DIR, "data", "guides")
+HOSPITALS_JSON_PATH = os.path.join(_BASE_DIR, "data", "hospitals.json")
+HOSPITAL_LOGO_MAP_PATH = os.path.join(_BASE_DIR, "data", "hospital_logo_map.json")
+HOSPITAL_LOGO_DIR = os.path.join(_BASE_DIR, "data", "hospital-logos")
 
 # --- API clients (cloud-based, replaces local models) ---
 
@@ -289,6 +295,38 @@ class SmartSearchResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     graph_stats: Dict[str, Any]
+
+
+class GuideHospital(BaseModel):
+    id: str
+    name: str
+    city: str
+    map_query: str = ""  # Chinese name for map deep-links (Amap/Baidu)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    logo_url: Optional[str] = None
+    advantage: str = ""
+
+
+class GuideExpert(BaseModel):
+    id: str
+    name: str
+    type: str  # doctor | team | department
+    bio: str = ""
+    hospital: GuideHospital
+
+
+class DiseaseGuideResponse(BaseModel):
+    disease_id: str
+    available: bool
+    name: str = ""
+    name_alt: str = ""
+    summary: str = ""
+    care_tips: List[str] = []
+    specialty_keywords: List[str] = []
+    experts: List[GuideExpert] = []
+    cities: List[str] = []
+    message: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -927,6 +965,9 @@ layperson_dict: Dict[str, str] = {}  # HP:XXXXXXX → layperson phrase
 layperson_dict_zh: Dict[str, str] = {}  # HP:XXXXXXX → 中文通俗说法
 hpo_names_zh: Dict[str, str] = {}       # HP:XXXXXXX → 中文专业术语
 disease_dict_zh: Dict[str, str] = {}   # ORPHA:ID → 中文疾病名
+# Care-guide data (WHS first)
+guide_hospitals: Dict[str, Dict[str, Any]] = {}  # hospital_id → hospital
+guide_by_disease: Dict[str, Dict[str, Any]] = {}  # disease_id → guide doc
 
 
 def resolve_name(hpo_id: str, fallback_name: str, mode: str = "expert",
@@ -1215,6 +1256,170 @@ Output ONLY a valid JSON object with this exact structure:
         return None
 
 
+def _apply_logo_map(hospitals: Dict[str, Dict[str, Any]]) -> None:
+    """Fill hospital['logo'] from hospital_logo_map.json when present."""
+    if not os.path.isfile(HOSPITAL_LOGO_MAP_PATH):
+        return
+    try:
+        with open(HOSPITAL_LOGO_MAP_PATH, encoding="utf-8") as f:
+            logos = (json.load(f) or {}).get("logos") or {}
+        by_name = {
+            (h.get("name_zh") or h.get("name") or ""): h for h in hospitals.values()
+        }
+        for name, filename in logos.items():
+            if name in by_name and filename:
+                by_name[name]["logo"] = filename
+    except Exception as exc:
+        print(f"   ⚠  hospital logo map load failed: {exc}")
+
+
+def load_care_guides() -> None:
+    """Load hospitals + per-disease guide JSON into memory."""
+    global guide_hospitals, guide_by_disease
+    guide_hospitals = {}
+    guide_by_disease = {}
+
+    if os.path.isfile(HOSPITALS_JSON_PATH):
+        with open(HOSPITALS_JSON_PATH, encoding="utf-8") as f:
+            hosp_doc = json.load(f)
+        for h in hosp_doc.get("hospitals") or []:
+            guide_hospitals[h["id"]] = dict(h)
+        _apply_logo_map(guide_hospitals)
+        print(f"   ✓  Care-guide hospitals loaded ({len(guide_hospitals)})")
+    else:
+        print("   ⚠  data/hospitals.json not found — run scripts/build_whs_guide.py")
+
+    if os.path.isdir(GUIDES_DIR):
+        for name in os.listdir(GUIDES_DIR):
+            if not name.endswith(".json"):
+                continue
+            path = os.path.join(GUIDES_DIR, name)
+            try:
+                with open(path, encoding="utf-8") as f:
+                    doc = json.load(f)
+                disease_id = doc.get("disease_id")
+                if disease_id:
+                    guide_by_disease[disease_id] = doc
+            except Exception as exc:
+                print(f"   ⚠  Failed to load guide {name}: {exc}")
+        print(f"   ✓  Care guides loaded ({len(guide_by_disease)}): "
+              f"{', '.join(sorted(guide_by_disease)) or '—'}")
+
+
+def _logo_url(filename: Optional[str]) -> Optional[str]:
+    if not filename:
+        return None
+    # Only expose basename to avoid path traversal
+    safe = os.path.basename(filename)
+    return f"/static/hospital-logos/{safe}"
+
+
+def _pick_lang(lang: str) -> str:
+    return "zh" if (lang or "").lower().startswith("zh") else "en"
+
+
+def _field(obj: Dict[str, Any], base: str, lang: str, fallback: str = "") -> str:
+    """Pick bilingual field: prefer base_zh / base_en, else legacy `base`."""
+    preferred = obj.get(f"{base}_{lang}")
+    if preferred:
+        return str(preferred)
+    other = "en" if lang == "zh" else "zh"
+    alt = obj.get(f"{base}_{other}")
+    if alt:
+        return str(alt)
+    legacy = obj.get(base)
+    return str(legacy) if legacy else fallback
+
+
+def _list_field(obj: Dict[str, Any], base: str, lang: str) -> List[str]:
+    preferred = obj.get(f"{base}_{lang}")
+    if isinstance(preferred, list) and preferred:
+        return [str(x) for x in preferred]
+    other = "en" if lang == "zh" else "zh"
+    alt = obj.get(f"{base}_{other}")
+    if isinstance(alt, list) and alt:
+        return [str(x) for x in alt]
+    legacy = obj.get(base)
+    if isinstance(legacy, list):
+        return [str(x) for x in legacy]
+    return []
+
+
+def build_guide_response(disease_id: str, lang: str = "en") -> DiseaseGuideResponse:
+    """Assemble a lang-isolated guide payload (en|zh)."""
+    disease_id = disease_id.strip()
+    lang = _pick_lang(lang)
+    doc = guide_by_disease.get(disease_id)
+
+    if not doc:
+        name_en = disease_id
+        name_zh = disease_dict_zh.get(disease_id, "")
+        if graph is not None and graph.G.has_node(disease_id):
+            name_en = graph.G.nodes[disease_id].get("name") or disease_id
+        name = name_zh if lang == "zh" and name_zh else name_en
+        name_alt = name_en if lang == "zh" else name_zh
+        message = (
+            "该病的就医指南仍在建设中。您可先查阅 Orphanet 或咨询罕见病协作网医院。"
+            if lang == "zh"
+            else "A curated care guide for this disease is still being prepared. "
+                 "You can check Orphanet or a rare-disease collaborative network hospital."
+        )
+        return DiseaseGuideResponse(
+            disease_id=disease_id,
+            available=False,
+            name=name,
+            name_alt=name_alt or "",
+            message=message,
+        )
+
+    name_zh = doc.get("name_zh") or ""
+    name_en = doc.get("name_en") or ""
+    primary = name_zh if lang == "zh" else name_en
+    secondary = name_en if lang == "zh" else name_zh
+
+    experts_out: List[GuideExpert] = []
+    cities: set = set()
+    for ex in doc.get("experts") or []:
+        hosp = guide_hospitals.get(ex.get("hospital_id") or "")
+        if not hosp:
+            continue
+        city_disp = _field(hosp, "city", lang)
+        if city_disp:
+            cities.add(city_disp)
+        name_zh_hosp = hosp.get("name_zh") or hosp.get("name") or ""
+        experts_out.append(
+            GuideExpert(
+                id=ex.get("id") or "",
+                name=_field(ex, "name", lang),
+                type=ex.get("type") or "doctor",
+                bio=_field(ex, "bio", lang),
+                hospital=GuideHospital(
+                    id=hosp["id"],
+                    name=_field(hosp, "name", lang),
+                    city=city_disp,
+                    map_query=name_zh_hosp,
+                    lat=hosp.get("lat"),
+                    lng=hosp.get("lng"),
+                    logo_url=_logo_url(hosp.get("logo")),
+                    advantage=_field(hosp, "advantage", lang),
+                ),
+            )
+        )
+
+    city_list = sorted(c for c in cities if c)
+    return DiseaseGuideResponse(
+        disease_id=doc.get("disease_id") or disease_id,
+        available=True,
+        name=primary or secondary or disease_id,
+        name_alt=secondary if secondary and secondary != primary else "",
+        summary=_field(doc, "summary", lang),
+        care_tips=_list_field(doc, "care_tips", lang),
+        specialty_keywords=_list_field(doc, "specialty_keywords", lang),
+        experts=experts_out,
+        cities=city_list,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Lifespan (replaces deprecated on_event)
 # ---------------------------------------------------------------------------
@@ -1227,6 +1432,10 @@ async def lifespan(app: FastAPI):
     so no local models need to be loaded. Server starts instantly.
     """
     global graph, vector_index, vector_mapping
+
+    # Care guides are lightweight JSON — always load (even if graph was
+    # pre-loaded by `_load_all_models` in `__main__`).
+    load_care_guides()
 
     # Skip if already loaded (e.g. by _load_all_models in __main__)
     if graph is not None:
@@ -1348,6 +1557,14 @@ _assets_dir = os.path.join(FRONTEND_DIST_DIR, "assets")
 if os.path.isdir(_assets_dir):
     app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
 
+# Hospital logos (filenames filled later via hospital_logo_map.json).
+if os.path.isdir(HOSPITAL_LOGO_DIR):
+    app.mount(
+        "/static/hospital-logos",
+        StaticFiles(directory=HOSPITAL_LOGO_DIR),
+        name="hospital-logos",
+    )
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
@@ -1363,9 +1580,7 @@ def _resolve_frontend_index() -> str:
     )
 
 
-@app.get("/")
-def serve_frontend():
-    """Serve the patient-facing React SPA."""
+def _spa_html() -> FileResponse:
     return FileResponse(
         _resolve_frontend_index(),
         media_type="text/html",
@@ -1377,12 +1592,41 @@ def serve_frontend():
     )
 
 
+@app.get("/")
+def serve_frontend():
+    """Serve the patient-facing React SPA."""
+    return _spa_html()
+
+
+@app.get("/disease/{disease_id:path}")
+def serve_disease_spa(disease_id: str):
+    """SPA fallback so /disease/ORPHA:280 refreshes work in production."""
+    return _spa_html()
+
+
 @app.get("/api/health", response_model=HealthResponse)
 def health_check():
     """Return server health and knowledge-graph statistics."""
     if graph is None:
         raise HTTPException(status_code=503, detail="Graph not loaded yet")
     return HealthResponse(status="ok", graph_stats=graph.stats())
+
+
+@app.get("/api/guides/{disease_id:path}", response_model=DiseaseGuideResponse)
+def get_disease_guide(
+    disease_id: str,
+    lang: str = Query("en", description="Language: 'en' or 'zh'"),
+):
+    """Return curated care-guide experts for a disease (WHS first).
+
+    Payload is language-isolated: all display strings follow `lang`.
+    Unknown diseases still return a placeholder with available=false.
+    """
+    # Accept both ORPHA:280 and URL-encoded forms; strip trailing junk.
+    disease_id = unquote(disease_id).strip().rstrip("/")
+    if not disease_id:
+        raise HTTPException(status_code=400, detail="disease_id required")
+    return build_guide_response(disease_id, lang=lang)
 
 
 @app.post("/api/predict", response_model=PredictResponse)
