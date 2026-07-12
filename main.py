@@ -1557,6 +1557,11 @@ _assets_dir = os.path.join(FRONTEND_DIST_DIR, "assets")
 if os.path.isdir(_assets_dir):
     app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
 
+# China GeoJSON for the care-guide ExpertMap (Vite puts it in dist/geo).
+_geo_dir = os.path.join(FRONTEND_DIST_DIR, "geo")
+if os.path.isdir(_geo_dir):
+    app.mount("/geo", StaticFiles(directory=_geo_dir), name="geo")
+
 # Hospital logos (filenames filled later via hospital_logo_map.json).
 if os.path.isdir(HOSPITAL_LOGO_DIR):
     app.mount(
